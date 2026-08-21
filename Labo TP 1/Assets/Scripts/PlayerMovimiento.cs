@@ -7,40 +7,55 @@ public class PlayerMovimiento : MonoBehaviour
     [SerializeField] private Transform camara;
     private CharacterController controlador;
 
-    [Header("Movimiento")]
-    [SerializeField] private float velocidadMovimiento = 5f;
+    [Header("Movimiento Base")]
+    [SerializeField] private float velocidadMaxima = 6f; 
+    
+    [Header("Aceleración y Desaceleración")]
+    [SerializeField] private float aceleracion = 25f; // Qué tan rápido llega a la velocidad máxima
+    [SerializeField] private float desaceleracion = 30f; // Qué tan rápido frena al soltar las teclas
+    
+    // Guardamos la velocidad actual en la que se mueve el jugador en el piso (X, Z)
+    private Vector3 velocidadPlanoActual; 
 
-    [Header("Gravedad")]
-    [SerializeField] private float gravedadDelJugador = -9.81f; // Adaptado al estándar físico
-    private Vector3 velocidadVertical;
+    [Header("Salto y Gravedad")]
+    [SerializeField] private float alturaSalto = 1.5f;
+    [SerializeField] private float gravedad = -15f;
+    [SerializeField, Range(1f, 3f)] private float multiplicadorCaida = 2f;
+    [SerializeField] private float velocidadTerminal = -50f;
+    
+    // Guardamos solo la velocidad vertical (Y)
+    private float velocidadVertical;
 
     private void Awake()
     {
         controlador = GetComponent<CharacterController>();
 
         if (camara == null && Camera.main != null)
-            camara = Camera.main.transform;
-    }
-
-    void Update()
-    {
-        // Unificamos todo en un solo método para hacer un único Move() al final
-        MoverJugador();
-    }
-
-    private void MoverJugador()
-    {
-        // 1. Comprobamos el suelo ANTES de aplicar gravedad
-        if (controlador.isGrounded && velocidadVertical.y < 0)
         {
-            velocidadVertical.y = -2f; // Lo mantiene pegado al piso suavemente
+            camara = Camera.main.transform;
         }
+    }
 
-        // 2. Capturamos las teclas (AWSD y Flechas)
+    private void Update()
+    {
+        // 1. Calculamos el movimiento horizontal (ahora con inercia)
+        Vector3 movimientoPlano = CalcularMovimientoEnPlano();
+        
+        // 2. Calculamos la gravedad y el salto
+        AplicarGravedadYSalto();
+
+        // 3. Combinamos ambos cálculos (X, Z con Y)
+        Vector3 movimientoFinal = movimientoPlano + (Vector3.up * velocidadVertical);
+
+        // 4. Movemos al personaje
+        controlador.Move(movimientoFinal * Time.deltaTime);
+    }
+
+    private Vector3 CalcularMovimientoEnPlano()
+    {
         float valorHorizontal = Input.GetAxisRaw("Horizontal");
         float valorVertical = Input.GetAxisRaw("Vertical");
 
-        // Calculamos hacia donde mira la cámara
         Vector3 adelanteCamara = camara.forward;
         Vector3 derechaCamara = camara.right;
 
@@ -50,23 +65,59 @@ public class PlayerMovimiento : MonoBehaviour
         adelanteCamara.Normalize();
         derechaCamara.Normalize();
 
-        // 3. Vector de movimiento en el plano
-        Vector3 direccionPlano = (derechaCamara * valorHorizontal + adelanteCamara * valorVertical);
+        Vector3 direccionDeseada = (derechaCamara * valorHorizontal + adelanteCamara * valorVertical);
 
-        // Normalizar EVITA que ir en diagonal sea más rápido
-        if (direccionPlano.sqrMagnitude > 0.01f)
-            direccionPlano.Normalize();
+        if (direccionDeseada.sqrMagnitude > 1f)
+        {
+            direccionDeseada.Normalize();
+        }
 
-        // Vector final de movimiento en XZ
-        Vector3 desplazamientoXZ = direccionPlano * velocidadMovimiento;
+        // Hacia dónde queremos ir y a qué velocidad máxima
+        Vector3 velocidadObjetivo = direccionDeseada * velocidadMaxima;
 
-        // 4. Aplicamos fuerza de gravedad en Y
-        velocidadVertical.y += gravedadDelJugador * Time.deltaTime;
-
-        // 5. Unificamos ambos vectores y hacemos UN SOLO Move()
-        Vector3 movimientoFinal = desplazamientoXZ + velocidadVertical;
+        // Determinamos si el jugador está intentando moverse o si soltó los controles
+        bool seEstaMoviendo = direccionDeseada.sqrMagnitude > 0.1f;
         
-        // Multiplicamos por deltaTime solo al momento de mover
-        controlador.Move(movimientoFinal * Time.deltaTime);
+        // Elegimos si aplicamos el valor de acelerar o de frenar
+        float tasaDeCambio = seEstaMoviendo ? aceleracion : desaceleracion;
+
+        // MoveTowards cambia gradualmente 'velocidadPlanoActual' hacia 'velocidadObjetivo'
+        velocidadPlanoActual = Vector3.MoveTowards(
+            velocidadPlanoActual, 
+            velocidadObjetivo, 
+            tasaDeCambio * Time.deltaTime
+        );
+
+        return velocidadPlanoActual;
+    }
+
+    private void AplicarGravedadYSalto()
+    {
+        if (controlador.isGrounded)
+        {
+            if (velocidadVertical < 0)
+            {
+                velocidadVertical = -2f;
+            }
+
+            if (Input.GetButtonDown("Jump"))
+            {
+                velocidadVertical = Mathf.Sqrt(alturaSalto * -2f * gravedad);
+            }
+        }
+
+        float gravedadAplicada = gravedad;
+
+        if (velocidadVertical < 0 && !controlador.isGrounded)
+        {
+            gravedadAplicada *= multiplicadorCaida;
+        }
+
+        velocidadVertical += gravedadAplicada * Time.deltaTime;
+
+        if (velocidadVertical < velocidadTerminal)
+        {
+            velocidadVertical = velocidadTerminal;
+        }
     }
 }
