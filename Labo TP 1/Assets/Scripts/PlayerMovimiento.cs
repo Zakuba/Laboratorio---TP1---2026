@@ -15,7 +15,14 @@ public class PlayerMovimiento : MonoBehaviour
     [SerializeField] private float desaceleracion = 30f; // Qué tan rápido frena al soltar las teclas
     
     // Guardamos la velocidad actual en la que se mueve el jugador en el piso (X, Z)
-    private Vector3 velocidadPlanoActual; 
+    private Vector3 velocidadPlanoActual;
+
+    [Header("Superficies")]
+    [SerializeField] private float distanciaDeteccionSuperficie = 1.3f;
+
+    private float multiplicadorVelocidadSuperficie = 1f;
+    private float multiplicadorAceleracionSuperficie = 1f;
+    private float multiplicadorFrenadoSuperficie = 1f;
 
     [Header("Salto y Gravedad")]
     [SerializeField] private float alturaSalto = 1.5f;
@@ -36,8 +43,11 @@ public class PlayerMovimiento : MonoBehaviour
         }
     }
 
-    private void Update()
-    {
+    private void Update() { 
+
+        // Detectamos sobre qué superficie está parado el jugador
+        DetectarSuperficie();
+    
         // 1. Calculamos el movimiento horizontal (ahora con inercia)
         Vector3 movimientoPlano = CalcularMovimientoEnPlano();
         
@@ -49,6 +59,42 @@ public class PlayerMovimiento : MonoBehaviour
 
         // 4. Movemos al personaje
         controlador.Move(movimientoFinal * Time.deltaTime);
+    }
+
+    private void DetectarSuperficie()
+    {
+        // Por defecto usamos los valores normales
+        multiplicadorVelocidadSuperficie = 1f;
+        multiplicadorAceleracionSuperficie = 1f;
+        multiplicadorFrenadoSuperficie = 1f;
+
+        // Elevamos el origen del rayo ligeramente
+        Vector3 origen = transform.position + Vector3.up * 0.2f;
+
+        // Disparamos un rayo invisible hacia abajo (Raycast)
+        if (Physics.Raycast(
+            origen, // Punto de partida del rayo
+            Vector3.down, // Dirección (hacia abajo)
+            out RaycastHit hit,
+            distanciaDeteccionSuperficie))
+        {
+            // Intentamos obtener el script 'SuperficieMovimiento' del objeto que pisamos
+            SuperficieMovimiento superficie =
+                hit.collider.GetComponentInParent<SuperficieMovimiento>();
+
+            // Si el suelo efectivamente tiene ese script, aplicamos sus modificadores
+            if (superficie != null)
+            {
+                multiplicadorVelocidadSuperficie =
+                    superficie.MultiplicadorVelocidad;
+
+                multiplicadorAceleracionSuperficie =
+                    superficie.MultiplicadorAceleracion;
+
+                multiplicadorFrenadoSuperficie =
+                    superficie.MultiplicadorFrenado;
+            }
+        }
     }
 
     private Vector3 CalcularMovimientoEnPlano()
@@ -73,13 +119,13 @@ public class PlayerMovimiento : MonoBehaviour
         }
 
         // Hacia dónde queremos ir y a qué velocidad máxima
-        Vector3 velocidadObjetivo = direccionDeseada * velocidadMaxima;
+        Vector3 velocidadObjetivo = direccionDeseada * velocidadMaxima * multiplicadorVelocidadSuperficie;
 
         // Determinamos si el jugador está intentando moverse o si soltó los controles
         bool seEstaMoviendo = direccionDeseada.sqrMagnitude > 0.1f;
-        
+
         // Elegimos si aplicamos el valor de acelerar o de frenar
-        float tasaDeCambio = seEstaMoviendo ? aceleracion : desaceleracion;
+        float tasaDeCambio = seEstaMoviendo ? aceleracion * multiplicadorAceleracionSuperficie : desaceleracion * multiplicadorFrenadoSuperficie;
 
         // MoveTowards cambia gradualmente 'velocidadPlanoActual' hacia 'velocidadObjetivo'
         velocidadPlanoActual = Vector3.MoveTowards(
