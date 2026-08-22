@@ -24,6 +24,10 @@ public class PlayerMovimiento : MonoBehaviour
     private float multiplicadorAceleracionSuperficie = 1f;
     private float multiplicadorFrenadoSuperficie = 1f;
 
+    [Header("Reaparición")]
+    [SerializeField] private Transform puntoReaparicion;
+    [SerializeField] private float limiteCaida = -10f;
+
     [Header("Salto y Gravedad")]
     [SerializeField] private float alturaSalto = 1.5f;
     [SerializeField] private float gravedad = -15f;
@@ -43,22 +47,62 @@ public class PlayerMovimiento : MonoBehaviour
         }
     }
 
-    private void Update() { 
+    private void Update()
+    {
+        // Si el jugador cayó y reapareció, terminamos este frame
+        if (DetectarCaida())
+        {
+            return;
+        }
 
         // Detectamos sobre qué superficie está parado el jugador
         DetectarSuperficie();
-    
-        // 1. Calculamos el movimiento horizontal (ahora con inercia)
+
+        // 1. Calculamos el movimiento horizontal
         Vector3 movimientoPlano = CalcularMovimientoEnPlano();
-        
+
         // 2. Calculamos la gravedad y el salto
         AplicarGravedadYSalto();
 
-        // 3. Combinamos ambos cálculos (X, Z con Y)
-        Vector3 movimientoFinal = movimientoPlano + (Vector3.up * velocidadVertical);
+        // 3. Combinamos movimiento horizontal y vertical
+        Vector3 movimientoFinal =
+            movimientoPlano + (Vector3.up * velocidadVertical);
 
         // 4. Movemos al personaje
         controlador.Move(movimientoFinal * Time.deltaTime);
+    }
+
+
+
+    private bool DetectarCaida()
+    {
+        if (transform.position.y < limiteCaida)
+        {
+            Reaparecer();
+            return true;
+        }
+
+        return false;
+    }
+
+    private void Reaparecer()
+    {
+        if (puntoReaparicion == null)
+        {
+            Debug.LogWarning(
+                "PlayerMovimiento: asigna un punto de reaparición."
+            );
+            return;
+        }
+
+        velocidadVertical = 0f;
+        velocidadPlanoActual = Vector3.zero;
+
+        controlador.enabled = false;
+
+        transform.position = puntoReaparicion.position;
+
+        controlador.enabled = true;
     }
 
     private void DetectarSuperficie()
