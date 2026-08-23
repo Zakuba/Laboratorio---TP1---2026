@@ -140,7 +140,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0
-  m_CollisionDetection: 0
+  m_CollisionDetection: 2
 --- !u!114 &-1734064719313554004
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -155,3 +155,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Snowball
   fuerzaEmpuje: 15
   tiempoDeVida: 5
+  efectoExplosion: {fileID: 5769196205591051157, guid: ea5a62e1507330a4c88a43aea73822e5, type: 3}

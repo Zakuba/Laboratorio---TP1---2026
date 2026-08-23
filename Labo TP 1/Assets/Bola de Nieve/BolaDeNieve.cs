@@ -12,26 +12,26 @@ public class Snowball : MonoBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
-        // Verificamos si el objeto impactado tiene la etiqueta "Player"
         if (collision.gameObject.CompareTag("Player"))
         {
-            Rigidbody rbObjetivo = collision.gameObject.GetComponent<Rigidbody>();
+            Rigidbody rbObjetivo =
+                collision.gameObject.GetComponent<Rigidbody>();
 
             if (rbObjetivo != null)
             {
-                // Calculamos la dirección del empuje (desde la bola hacia el jugador)
-                Vector3 direccionEmpuje = collision.transform.position - transform.position;
-                
-                // Levantamos ligeramente el vector en el eje Y para que el empuje lo levante del suelo
-                direccionEmpuje.y = 0.5f; 
+                Vector3 direccionEmpuje =
+                    collision.transform.position - transform.position;
+
+                direccionEmpuje.y = 0.5f;
                 direccionEmpuje.Normalize();
 
-                // Aplicamos la fuerza de empuje como un impacto repentino (Impulse)
-                rbObjetivo.AddForce(direccionEmpuje * fuerzaEmpuje, ForceMode.Impulse);
+                rbObjetivo.AddForce(
+                    direccionEmpuje * fuerzaEmpuje,
+                    ForceMode.Impulse
+                );
             }
         }
 
-        // Si choca con el jugador o con cualquier otra cosa, despawnea.
         Destroy(gameObject);
     }
 }
