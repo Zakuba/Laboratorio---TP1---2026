@@ -25,7 +25,8 @@ public class PlayerMovimiento : MonoBehaviour
     private float multiplicadorFrenadoSuperficie = 1f;
 
     [Header("Reaparición")]
-    [SerializeField] private Transform puntoReaparicion;
+    [SerializeField] private Transform puntoReaparicionInicial;
+    private Transform ultimoPuntoReaparicion;
     [SerializeField] private float limiteCaida = -10f;
 
     [Header("Salto y Gravedad")]
@@ -45,6 +46,9 @@ public class PlayerMovimiento : MonoBehaviour
         {
             camara = Camera.main.transform;
         }
+
+        ultimoPuntoReaparicion = puntoReaparicionInicial;
+
     }
 
     private void Update()
@@ -87,7 +91,7 @@ public class PlayerMovimiento : MonoBehaviour
 
     private void Reaparecer()
     {
-        if (puntoReaparicion == null)
+        if (ultimoPuntoReaparicion == null)
         {
             Debug.LogWarning(
                 "PlayerMovimiento: asigna un punto de reaparición."
@@ -100,7 +104,7 @@ public class PlayerMovimiento : MonoBehaviour
 
         controlador.enabled = false;
 
-        transform.position = puntoReaparicion.position;
+        transform.position = ultimoPuntoReaparicion.position;
 
         controlador.enabled = true;
     }
@@ -209,5 +213,12 @@ public class PlayerMovimiento : MonoBehaviour
         {
             velocidadVertical = velocidadTerminal;
         }
+    }
+
+    public void ActualizarCheckpoint(Transform nuevoPuntoReaparicion)
+    {
+        ultimoPuntoReaparicion = nuevoPuntoReaparicion;
+
+        Debug.Log("Checkpoint actualizado.");
     }
 }
