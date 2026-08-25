@@ -19,7 +19,7 @@ MonoBehaviour:
     width: 1918
     height: 980
   m_ShowMode: 4
-  m_Title: Hierarchy
+  m_Title: Game
   m_RootView: {fileID: 2}
   m_MinSize: {x: 875, y: 300}
   m_MaxSize: {x: 10000, y: 10000}
@@ -118,7 +118,7 @@ MonoBehaviour:
   m_MinSize: {x: 400, y: 112}
   m_MaxSize: {x: 32384, y: 16192}
   vertical: 0
-  controlID: 48
+  controlID: 49
   draggingID: 0
 --- !u!114 &6
 MonoBehaviour:
@@ -144,7 +144,7 @@ MonoBehaviour:
   m_MinSize: {x: 400, y: 112}
   m_MaxSize: {x: 32384, y: 16192}
   vertical: 1
-  controlID: 49
+  controlID: 50
   draggingID: 0
 --- !u!114 &7
 MonoBehaviour:
@@ -172,7 +172,7 @@ MonoBehaviour:
   m_MinSize: {x: 400, y: 56}
   m_MaxSize: {x: 32384, y: 8096}
   vertical: 0
-  controlID: 50
+  controlID: 51
   draggingID: 0
 --- !u!114 &8
 MonoBehaviour:
@@ -246,8 +246,8 @@ MonoBehaviour:
     y: 0
     width: 684
     height: 688
-  m_MinSize: {x: 200, y: 200}
-  m_MaxSize: {x: 4000, y: 4000}
+  m_MinSize: {x: 202, y: 226}
+  m_MaxSize: {x: 4002, y: 4026}
   m_ActualView: {fileID: 18}
   m_Panes:
   - {fileID: 18}
@@ -272,8 +272,8 @@ MonoBehaviour:
     y: 0
     width: 387
     height: 688
-  m_MinSize: {x: 275, y: 50}
-  m_MaxSize: {x: 4000, y: 4000}
+  m_MinSize: {x: 276, y: 76}
+  m_MaxSize: {x: 4001, y: 4026}
   m_ActualView: {fileID: 14}
   m_Panes:
   - {fileID: 14}
@@ -671,16 +671,11 @@ MonoBehaviour:
   m_SceneHierarchy:
     m_TreeViewState:
       scrollPos: {x: 0, y: 0}
-      m_SelectedIDs:
-      - m_rawData: 568105589213725496
+      m_SelectedIDs: []
       m_LastClickedID:
-        m_rawData: 568105589213725496
+        m_rawData: 0
       m_ExpandedIDs:
-      - m_rawData: 568105589213725250
-      - m_rawData: 568105589213725480
-      - m_rawData: 568105589213755906
-      - m_rawData: 568105584918856804
-      - m_rawData: 568105584918856808
+      - m_rawData: 568105589213724688
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -1507,7 +1502,7 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-    - Assets
+    - Assets/OccaSoftware/Crosshairs/Art/Textures
     m_Globs: []
     m_ProductIds: 
     m_AnyWithAssetOrigin: 0
@@ -1517,26 +1512,26 @@ MonoBehaviour:
   m_ViewMode: 1
   m_StartGridSize: 16
   m_LastFolders:
-  - Assets
+  - Assets/OccaSoftware/Crosshairs/Art/Textures
   m_LastFoldersGridSize: 16
   m_LastProjectPath: C:\Users\Tobias\git\Laboratorio---TP1---2026\Labo TP 1
   m_LockTracker:
     m_IsLocked: 0
   m_LastLocalAssetsSearchArea: 1
   m_FolderTreeState:
-    scrollPos: {x: 0, y: 50}
+    scrollPos: {x: 0, y: 118}
     m_SelectedIDs:
-    - m_rawData: 568105584918853192
+    - m_rawData: 568105584918878262
     m_LastClickedID:
-      m_rawData: 568105584918853192
+      m_rawData: 568105584918878262
     m_ExpandedIDs:
-    - m_rawData: 568105589213755208
+    - m_rawData: 568105589213724128
     - m_rawData: 0
-    - m_rawData: 568105584918853192
-    - m_rawData: 568105584918859714
-    - m_rawData: 568105584918859756
-    - m_rawData: 568105584918859768
-    - m_rawData: 568105584918859782
+    - m_rawData: 568105584918853340
+    - m_rawData: 568105584918877948
+    - m_rawData: 568105584918877950
+    - m_rawData: 568105584918877952
+    - m_rawData: 568105584918877954
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1570,7 +1565,11 @@ MonoBehaviour:
       m_rawData: 0
     m_ExpandedIDs:
     - m_rawData: 0
-    - m_rawData: 568105584918853192
+    - m_rawData: 568105584918853340
+    - m_rawData: 568105584918877948
+    - m_rawData: 568105584918877950
+    - m_rawData: 568105584918877952
+    - m_rawData: 568105584918877954
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1598,16 +1597,15 @@ MonoBehaviour:
       m_Icon: {fileID: 0}
       m_ResourceFile: 
   m_ListAreaState:
-    m_SelectedInstanceIDs:
-    - m_rawData: 568105589213725496
+    m_SelectedInstanceIDs: []
     m_LastClickedEntityId:
-      m_rawData: 568105589213725496
-    m_HadKeyboardFocusLastEvent: 1
+      m_rawData: 0
+    m_HadKeyboardFocusLastEvent: 0
     m_ExpandedInstanceIDs: []
     m_RenameOverlay:
       m_UserAcceptedRename: 0
-      m_Name: Art
-      m_OriginalName: Art
+      m_Name: 
+      m_OriginalName: 
       m_EditFieldRect:
         serializedVersion: 2
         x: 0
@@ -1615,10 +1613,10 @@ MonoBehaviour:
         width: 0
         height: 0
       m_UserData:
-        m_rawData: 568105584918859714
+        m_rawData: 0
       m_IsWaitingForDelay: 0
       m_IsRenaming: 0
-      m_OriginalEventType: 0
+      m_OriginalEventType: 11
       m_IsRenamingFilename: 1
       m_TrimLeadingAndTrailingWhitespace: 0
       m_ClientGUIView: {fileID: 12}
