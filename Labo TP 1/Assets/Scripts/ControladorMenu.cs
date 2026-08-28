@@ -3,6 +3,8 @@ using UnityEngine.SceneManagement;
 
 public class ControladorMenu : MonoBehaviour
 {
+        [Header("Asigna aquí el Panel de Muestra de Controles desde el Inspector")]
+    public GameObject panelMuestaMuestraDeControles;
     // Función para el botón "SinglePlayer"
     public void JugarSinglePlayer()
     {
@@ -25,8 +27,18 @@ public class ControladorMenu : MonoBehaviour
 
     public void VerControles()
     {
-        Debug.Log("Mostrando pantalla de controles...");
-        // Aquí podrías activar un panel que muestre los controles
+        panelMuestaMuestraDeControles.SetActive(true); // Muestra la interfaz verde
+        // Desbloquear y mostrar el cursor si en tu juego 3D lo tienes oculto
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
+     public void VolveraMenu()
+    {
+        panelMuestaMuestraDeControles.SetActive(false); // Muestra la interfaz verde
+        // Desbloquear y mostrar el cursor si en tu juego 3D lo tienes oculto
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
     }
 
     // Función para el botón "Salir"
