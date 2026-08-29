@@ -89,7 +89,7 @@ public class PlayerMovimiento : MonoBehaviour
         return false;
     }
 
-    private void Reaparecer()
+    public void Reaparecer()
     {
         if (ultimoPuntoReaparicion == null)
         {
