@@ -10,6 +10,13 @@ public GameObject snowballPrefab;
 
     void Update()
     {
+
+        // Si el juego está pausado (el tiempo está congelado), salimos del Update y no hacemos nada
+        if (Time.timeScale == 0f)
+        {
+            return;
+        }
+        
         // Detectar el clic izquierdo Y comprobar si ya pasó el tiempo necesario
         if (Input.GetMouseButtonDown(0))
         {
