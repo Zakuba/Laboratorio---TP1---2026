@@ -1,19 +1,20 @@
+using Unity.Netcode;
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
-public class PlayerMovimiento : MonoBehaviour
+public class PlayerMovimiento : NetworkBehaviour
 {
     [Header("Referencias")]
     [SerializeField] private Transform camara;
     private CharacterController controlador;
 
     [Header("Movimiento Base")]
-    [SerializeField] private float velocidadMaxima = 6f; 
-    
+    [SerializeField] private float velocidadMaxima = 6f;
+
     [Header("Aceleración y Desaceleración")]
     [SerializeField] private float aceleracion = 25f; // Qué tan rápido llega a la velocidad máxima
     [SerializeField] private float desaceleracion = 30f; // Qué tan rápido frena al soltar las teclas
-    
+
     // Guardamos la velocidad actual en la que se mueve el jugador en el piso (X, Z)
     private Vector3 velocidadPlanoActual;
 
@@ -34,7 +35,7 @@ public class PlayerMovimiento : MonoBehaviour
     [SerializeField] private float gravedad = -15f;
     [SerializeField, Range(1f, 3f)] private float multiplicadorCaida = 2f;
     [SerializeField] private float velocidadTerminal = -50f;
-    
+
     // Guardamos solo la velocidad vertical (Y)
     private float velocidadVertical;
 
@@ -48,11 +49,29 @@ public class PlayerMovimiento : MonoBehaviour
         }
 
         ultimoPuntoReaparicion = puntoReaparicionInicial;
+    }
 
+    public override void OnNetworkSpawn()
+    {
+        // Si este personaje NO es el nuestro (es el de otro jugador conectado),
+        // no tiene sentido tener el CharacterController local activo procesando
+        // nada: su posición/rotación va a llegar sincronizada por NetworkTransform.
+        if (!IsOwner)
+        {
+            if (controlador != null)
+            {
+                controlador.enabled = false;
+            }
+        }
     }
 
     private void Update()
     {
+        // Clave para multiplayer: cada cliente solo controla SU PROPIO personaje.
+        // Sin este chequeo, el mismo teclado terminaría moviendo a todos los
+        // Player que existan localmente (el propio y las copias de los demás).
+        if (!IsOwner) return;
+
         // Si el jugador cayó y reapareció, terminamos este frame
         if (DetectarCaida())
         {
@@ -177,8 +196,8 @@ public class PlayerMovimiento : MonoBehaviour
 
         // MoveTowards cambia gradualmente 'velocidadPlanoActual' hacia 'velocidadObjetivo'
         velocidadPlanoActual = Vector3.MoveTowards(
-            velocidadPlanoActual, 
-            velocidadObjetivo, 
+            velocidadPlanoActual,
+            velocidadObjetivo,
             tasaDeCambio * Time.deltaTime
         );
 
