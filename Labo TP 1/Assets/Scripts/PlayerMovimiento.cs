@@ -1,7 +1,8 @@
 using UnityEngine;
+using Unity.Netcode;
 
 [RequireComponent(typeof(CharacterController))]
-public class PlayerMovimiento : MonoBehaviour
+public class PlayerMovimiento : NetworkBehaviour
 {
     [Header("Referencias")]
     [SerializeField] private Transform camara;
@@ -11,10 +12,9 @@ public class PlayerMovimiento : MonoBehaviour
     [SerializeField] private float velocidadMaxima = 6f; 
     
     [Header("Aceleración y Desaceleración")]
-    [SerializeField] private float aceleracion = 25f; // Qué tan rápido llega a la velocidad máxima
-    [SerializeField] private float desaceleracion = 30f; // Qué tan rápido frena al soltar las teclas
+    [SerializeField] private float aceleracion = 25f;
+    [SerializeField] private float desaceleracion = 30f;
     
-    // Guardamos la velocidad actual en la que se mueve el jugador en el piso (X, Z)
     private Vector3 velocidadPlanoActual;
 
     [Header("Superficies")]
@@ -27,7 +27,7 @@ public class PlayerMovimiento : MonoBehaviour
     [Header("Reaparición")]
     [SerializeField] private Transform puntoReaparicionInicial;
     private Transform ultimoPuntoReaparicion;
-    [SerializeField] private float limiteCaida = -10f;
+    [SerializeField] private float limiteCaida = -15f;
 
     [Header("Salto y Gravedad")]
     [SerializeField] private float alturaSalto = 1.5f;
@@ -35,7 +35,6 @@ public class PlayerMovimiento : MonoBehaviour
     [SerializeField, Range(1f, 3f)] private float multiplicadorCaida = 2f;
     [SerializeField] private float velocidadTerminal = -50f;
     
-    // Guardamos solo la velocidad vertical (Y)
     private float velocidadVertical;
 
     private void Awake()
@@ -46,37 +45,25 @@ public class PlayerMovimiento : MonoBehaviour
         {
             camara = Camera.main.transform;
         }
-
-        ultimoPuntoReaparicion = puntoReaparicionInicial;
-
     }
 
     private void Update()
     {
-        // Si el jugador cayó y reapareció, terminamos este frame
+        if (!IsOwner) return;
+
         if (DetectarCaida())
         {
             return;
         }
 
-        // Detectamos sobre qué superficie está parado el jugador
         DetectarSuperficie();
 
-        // 1. Calculamos el movimiento horizontal
         Vector3 movimientoPlano = CalcularMovimientoEnPlano();
-
-        // 2. Calculamos la gravedad y el salto
         AplicarGravedadYSalto();
 
-        // 3. Combinamos movimiento horizontal y vertical
-        Vector3 movimientoFinal =
-            movimientoPlano + (Vector3.up * velocidadVertical);
-
-        // 4. Movemos al personaje
+        Vector3 movimientoFinal = movimientoPlano + (Vector3.up * velocidadVertical);
         controlador.Move(movimientoFinal * Time.deltaTime);
     }
-
-
 
     private bool DetectarCaida()
     {
@@ -93,54 +80,38 @@ public class PlayerMovimiento : MonoBehaviour
     {
         if (ultimoPuntoReaparicion == null)
         {
-            Debug.LogWarning(
-                "PlayerMovimiento: asigna un punto de reaparición."
-            );
-            return;
+            GameObject spawn = GameObject.Find("SpawnPoint");
+            if (spawn != null) ultimoPuntoReaparicion = spawn.transform;
         }
 
-        velocidadVertical = 0f;
-        velocidadPlanoActual = Vector3.zero;
+        if (ultimoPuntoReaparicion != null)
+        {
+            velocidadVertical = 0f;
+            velocidadPlanoActual = Vector3.zero;
 
-        controlador.enabled = false;
-
-        transform.position = ultimoPuntoReaparicion.position;
-
-        controlador.enabled = true;
+            controlador.enabled = false;
+            transform.position = ultimoPuntoReaparicion.position + Vector3.up * 0.5f;
+            controlador.enabled = true;
+        }
     }
 
     private void DetectarSuperficie()
     {
-        // Por defecto usamos los valores normales
         multiplicadorVelocidadSuperficie = 1f;
         multiplicadorAceleracionSuperficie = 1f;
         multiplicadorFrenadoSuperficie = 1f;
 
-        // Elevamos el origen del rayo ligeramente
         Vector3 origen = transform.position + Vector3.up * 0.2f;
 
-        // Disparamos un rayo invisible hacia abajo (Raycast)
-        if (Physics.Raycast(
-            origen, // Punto de partida del rayo
-            Vector3.down, // Dirección (hacia abajo)
-            out RaycastHit hit,
-            distanciaDeteccionSuperficie))
+        if (Physics.Raycast(origen, Vector3.down, out RaycastHit hit, distanciaDeteccionSuperficie))
         {
-            // Intentamos obtener el script 'SuperficieMovimiento' del objeto que pisamos
-            SuperficieMovimiento superficie =
-                hit.collider.GetComponentInParent<SuperficieMovimiento>();
+            SuperficieMovimiento superficie = hit.collider.GetComponentInParent<SuperficieMovimiento>();
 
-            // Si el suelo efectivamente tiene ese script, aplicamos sus modificadores
             if (superficie != null)
             {
-                multiplicadorVelocidadSuperficie =
-                    superficie.MultiplicadorVelocidad;
-
-                multiplicadorAceleracionSuperficie =
-                    superficie.MultiplicadorAceleracion;
-
-                multiplicadorFrenadoSuperficie =
-                    superficie.MultiplicadorFrenado;
+                multiplicadorVelocidadSuperficie = superficie.MultiplicadorVelocidad;
+                multiplicadorAceleracionSuperficie = superficie.MultiplicadorAceleracion;
+                multiplicadorFrenadoSuperficie = superficie.MultiplicadorFrenado;
             }
         }
     }
@@ -150,8 +121,8 @@ public class PlayerMovimiento : MonoBehaviour
         float valorHorizontal = Input.GetAxisRaw("Horizontal");
         float valorVertical = Input.GetAxisRaw("Vertical");
 
-        Vector3 adelanteCamara = camara.forward;
-        Vector3 derechaCamara = camara.right;
+        Vector3 adelanteCamara = camara != null ? camara.forward : transform.forward;
+        Vector3 derechaCamara = camara != null ? camara.right : transform.right;
 
         adelanteCamara.y = 0f;
         derechaCamara.y = 0f;
@@ -166,16 +137,10 @@ public class PlayerMovimiento : MonoBehaviour
             direccionDeseada.Normalize();
         }
 
-        // Hacia dónde queremos ir y a qué velocidad máxima
         Vector3 velocidadObjetivo = direccionDeseada * velocidadMaxima * multiplicadorVelocidadSuperficie;
-
-        // Determinamos si el jugador está intentando moverse o si soltó los controles
         bool seEstaMoviendo = direccionDeseada.sqrMagnitude > 0.1f;
-
-        // Elegimos si aplicamos el valor de acelerar o de frenar
         float tasaDeCambio = seEstaMoviendo ? aceleracion * multiplicadorAceleracionSuperficie : desaceleracion * multiplicadorFrenadoSuperficie;
 
-        // MoveTowards cambia gradualmente 'velocidadPlanoActual' hacia 'velocidadObjetivo'
         velocidadPlanoActual = Vector3.MoveTowards(
             velocidadPlanoActual, 
             velocidadObjetivo, 
@@ -218,7 +183,6 @@ public class PlayerMovimiento : MonoBehaviour
     public void ActualizarCheckpoint(Transform nuevoPuntoReaparicion)
     {
         ultimoPuntoReaparicion = nuevoPuntoReaparicion;
-
         Debug.Log("Checkpoint actualizado.");
     }
 }

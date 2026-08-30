@@ -1,56 +1,63 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Unity.Netcode;
 
 public class ControladorPausa : MonoBehaviour
 {
     [Header("Asigna aquí el Panel de Pausa desde el Inspector")]
     public GameObject panelPausa;
 
+    [Header("Nombre de la escena de Menú")]
+    [SerializeField] private string nombreEscenaMenu = "Menu";
+
     private bool juegoPausado = false;
 
     void Update()
     {
-        // Detectar si se presiona la tecla ESC
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             if (juegoPausado)
             {
-                ReanudarJuego(); // Si ya está pausado, lo reanuda (es lo mismo que tocar el botón "Volver")
+                ReanudarJuego();
             }
             else
             {
-                PausarJuego(); // Si no está pausado, abre el menú
+                PausarJuego();
             }
         }
     }
 
     public void PausarJuego()
     {
-        panelPausa.SetActive(true); // Muestra la interfaz verde
-        Time.timeScale = 0f;        // Congela el tiempo del juego (físicas, animaciones, etc.)
+        panelPausa.SetActive(true);
         juegoPausado = true;
         
-        // Opcional: Desbloquear y mostrar el cursor si en tu juego 3D lo tienes oculto
+        // En multijugador solo liberamos el cursor localmente (no usamos Time.timeScale = 0)
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
 
-    // Esta es la función para el botón "Volver"
     public void ReanudarJuego()
     {
-        panelPausa.SetActive(false); // Oculta la interfaz
-        Time.timeScale = 1f;         // Restaura el tiempo a la normalidad
+        panelPausa.SetActive(false);
         juegoPausado = false;
-        
         
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
 
-    // Esta es la función para el botón "Menu"
     public void VolverAlMenuPrincipal()
     {
-        Time.timeScale = 1f;
-        SceneManager.LoadScene("Menu"); // Carga tu escena inicial
+        // Cerramos la sesión de red si está activa
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.Shutdown();
+        }
+
+        // Restablecemos el cursor antes de volver al menú
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        SceneManager.LoadScene(nombreEscenaMenu);
     }
 }
