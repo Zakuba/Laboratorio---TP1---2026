@@ -8,12 +8,12 @@ public class PlayerMovimiento : MonoBehaviour
     private CharacterController controlador;
 
     [Header("Movimiento Base")]
-    [SerializeField] private float velocidadMaxima = 6f; 
-    
+    [SerializeField] private float velocidadMaxima = 6f;
+
     [Header("Aceleración y Desaceleración")]
     [SerializeField] private float aceleracion = 25f; // Qué tan rápido llega a la velocidad máxima
     [SerializeField] private float desaceleracion = 30f; // Qué tan rápido frena al soltar las teclas
-    
+
     // Guardamos la velocidad actual en la que se mueve el jugador en el piso (X, Z)
     private Vector3 velocidadPlanoActual;
 
@@ -34,7 +34,7 @@ public class PlayerMovimiento : MonoBehaviour
     [SerializeField] private float gravedad = -15f;
     [SerializeField, Range(1f, 3f)] private float multiplicadorCaida = 2f;
     [SerializeField] private float velocidadTerminal = -50f;
-    
+
     // Guardamos solo la velocidad vertical (Y)
     private float velocidadVertical;
 
@@ -177,8 +177,8 @@ public class PlayerMovimiento : MonoBehaviour
 
         // MoveTowards cambia gradualmente 'velocidadPlanoActual' hacia 'velocidadObjetivo'
         velocidadPlanoActual = Vector3.MoveTowards(
-            velocidadPlanoActual, 
-            velocidadObjetivo, 
+            velocidadPlanoActual,
+            velocidadObjetivo,
             tasaDeCambio * Time.deltaTime
         );
 
