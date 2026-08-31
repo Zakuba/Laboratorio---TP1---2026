@@ -20,21 +20,88 @@ public class ControladorMenu : MonoBehaviour
     public void IniciarHost()
     {
         Debug.Log("Iniciando como Host...");
-        NetworkManager.Singleton.StartHost(); 
-        OcultarMenuPrincipal();               
-        
-        // Encendemos la mira al instante de iniciar
-        if (miraHUD != null) miraHUD.SetActive(true); 
+        NetworkManager networkManager = NetworkManager.Singleton;
+        networkManager.OnClientConnectedCallback -= AlConectarHostLocal;
+        networkManager.OnClientConnectedCallback += AlConectarHostLocal;
+
+        if (!networkManager.StartHost())
+        {
+            networkManager.OnClientConnectedCallback -= AlConectarHostLocal;
+            return;
+        }
+
+        OcultarMenuPrincipal();
     }
 
     public void UnirseHost()
     {
         Debug.Log("Uniéndose a partida...");
-        NetworkManager.Singleton.StartClient(); 
+        NetworkManager networkManager = NetworkManager.Singleton;
+        networkManager.SceneManager.OnSynchronizeComplete -= AlCompletarSincronizacion;
+        networkManager.SceneManager.OnSynchronizeComplete += AlCompletarSincronizacion;
+
+        if (!networkManager.StartClient())
+        {
+            networkManager.SceneManager.OnSynchronizeComplete -= AlCompletarSincronizacion;
+            return;
+        }
+
         OcultarMenuPrincipal();                 
-        
-        // Encendemos la mira al instante de unirnos
-        if (miraHUD != null) miraHUD.SetActive(true); 
+    }
+
+    private void AlConectarHostLocal(ulong clientId)
+    {
+        NetworkManager networkManager = NetworkManager.Singleton;
+        if (networkManager == null || clientId != networkManager.LocalClientId)
+        {
+            return;
+        }
+
+        MostrarMira();
+        networkManager.OnClientConnectedCallback -= AlConectarHostLocal;
+    }
+
+    private void AlCompletarSincronizacion(ulong clientId)
+    {
+        NetworkManager networkManager = NetworkManager.Singleton;
+        if (networkManager == null || clientId != networkManager.LocalClientId)
+        {
+            return;
+        }
+
+        MostrarMira();
+
+        networkManager.SceneManager.OnSynchronizeComplete -= AlCompletarSincronizacion;
+    }
+
+    private void MostrarMira()
+    {
+        if (miraHUD == null)
+        {
+            return;
+        }
+
+        NetworkObject jugadorLocal = NetworkManager.Singleton?.LocalClient?.PlayerObject;
+        Camera camaraLocal = jugadorLocal != null
+            ? jugadorLocal.GetComponentInChildren<Camera>(true)
+            : null;
+        Canvas canvasHUD = miraHUD.GetComponentInParent<Canvas>();
+
+        if (canvasHUD != null && camaraLocal != null)
+        {
+            canvasHUD.worldCamera = camaraLocal;
+        }
+
+        miraHUD.SetActive(true);
+    }
+
+    private void OnDestroy()
+    {
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.OnClientConnectedCallback -= AlConectarHostLocal;
+            NetworkManager.Singleton.SceneManager.OnSynchronizeComplete -= AlCompletarSincronizacion;
+        }
     }
 
     private void OcultarMenuPrincipal()
