@@ -18,6 +18,8 @@ public class PlayerMovimientoOnline : NetworkBehaviour
     [SerializeField] private float desaceleracion = 30f; 
 
     private Vector3 velocidadPlanoActual;
+    private Vector3 velocidadKnockback;
+    private const float DesaceleracionKnockback = 12f;
 
     [Header("Superficies")]
     [SerializeField] private float distanciaDeteccionSuperficie = 1.3f;
@@ -84,10 +86,16 @@ private void Awake()
 
         // 3. Combinamos movimiento horizontal y vertical
         Vector3 movimientoFinal =
-            movimientoPlano + (Vector3.up * velocidadVertical);
+            movimientoPlano + (Vector3.up * velocidadVertical) + velocidadKnockback;
 
         // 4. Movemos al personaje
         controlador.Move(movimientoFinal * Time.deltaTime);
+
+        velocidadKnockback = Vector3.MoveTowards(
+            velocidadKnockback,
+            Vector3.zero,
+            DesaceleracionKnockback * Time.deltaTime
+        );
     }
     public override void OnNetworkSpawn()
     {
@@ -105,6 +113,31 @@ private void Awake()
     {
         // Limpiamos el evento por seguridad si el jugador se desconecta
         SceneManager.sceneLoaded -= AlCargarEscena;
+    }
+
+    public void AplicarKnockbackDesdeServidor(Vector3 impulso)
+    {
+        if (!IsServer) return;
+
+        ClientRpcParams parametros = new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams
+            {
+                TargetClientIds = new[] { OwnerClientId }
+            }
+        };
+
+        AplicarKnockbackClientRpc(impulso, parametros);
+    }
+
+    [ClientRpc]
+    private void AplicarKnockbackClientRpc(
+        Vector3 impulso,
+        ClientRpcParams clientRpcParams = default)
+    {
+        if (!IsOwner) return;
+
+        velocidadKnockback += impulso;
     }
 
     private void AlCargarEscena(Scene escena, LoadSceneMode modo)
@@ -140,6 +173,7 @@ private void Awake()
 
         velocidadVertical = 0f;
         velocidadPlanoActual = Vector3.zero;
+        velocidadKnockback = Vector3.zero;
 
         controlador.enabled = false;
 

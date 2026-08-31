@@ -9,6 +9,12 @@ public class BolaDeNieveOnline : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        Rigidbody rigidbodyBola = GetComponent<Rigidbody>();
+        if (rigidbodyBola != null)
+        {
+            rigidbodyBola.isKinematic = !IsServer;
+        }
+
         // 3. SOLO el Servidor cuenta el tiempo de vida del proyectil
         if (IsServer)
         {
@@ -26,8 +32,22 @@ public class BolaDeNieveOnline : NetworkBehaviour
         // Aquí puedes poner un Debug o la lógica de empuje
         if (colision.gameObject.CompareTag("Player"))
         {
-            Debug.Log("¡Un jugador fue golpeado por la bola!");
-            // (Más adelante aquí agregarás el ClientRpc para empujar al jugador)
+            PlayerMovimientoOnline jugadorGolpeado =
+                colision.gameObject.GetComponentInParent<PlayerMovimientoOnline>();
+
+            if (jugadorGolpeado != null)
+            {
+                Vector3 direccionEmpuje =
+                    jugadorGolpeado.transform.position - transform.position;
+                direccionEmpuje.y = Mathf.Max(direccionEmpuje.y, 0.35f);
+
+                if (direccionEmpuje.sqrMagnitude > 0.0001f)
+                {
+                    jugadorGolpeado.AplicarKnockbackDesdeServidor(
+                        direccionEmpuje.normalized * fuerzaEmpuje
+                    );
+                }
+            }
         }
 
         // Destruimos la bola de nieve al chocar contra cualquier cosa
