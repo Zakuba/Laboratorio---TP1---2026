@@ -1,47 +1,64 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Unity.Netcode;
 
 public class ControladorMenu : MonoBehaviour
 {
-        [Header("Asigna aquí el Panel de Muestra de Controles desde el Inspector")]
+    [Header("Paneles de Interfaz")]
+    public GameObject panelMenuPrincipal; 
     public GameObject panelMuestaMuestraDeControles;
-    // Función para el botón "SinglePlayer"
+    
+    [Header("HUD del Juego")]
+    [Tooltip("Asigna aquí la Mira del Canvas para que aparezca al jugar")]
+    public GameObject miraHUD; // <-- NUEVA VARIABLE PARA LA MIRA
+
     public void JugarSinglePlayer()
     {
-        // Carga la escena de juego. Asegúrate de que su nombre sea exactamente "SampleScene"
         SceneManager.LoadScene("SampleScene");
     }
 
-    // Funciones base para los botones de red (tendrás que ampliarlas cuando uses un sistema como Netcode o Photon)
     public void IniciarHost()
     {
         Debug.Log("Iniciando como Host...");
-        // Lógica de red aquí
+        NetworkManager.Singleton.StartHost(); 
+        OcultarMenuPrincipal();               
+        
+        // Encendemos la mira al instante de iniciar
+        if (miraHUD != null) miraHUD.SetActive(true); 
     }
 
     public void UnirseHost()
     {
-        Debug.Log("Buscando partida...");
-        // Lógica de red aquí
+        Debug.Log("Uniéndose a partida...");
+        NetworkManager.Singleton.StartClient(); 
+        OcultarMenuPrincipal();                 
+        
+        // Encendemos la mira al instante de unirnos
+        if (miraHUD != null) miraHUD.SetActive(true); 
+    }
+
+    private void OcultarMenuPrincipal()
+    {
+        if (panelMenuPrincipal != null)
+        {
+            panelMenuPrincipal.SetActive(false);
+        }
     }
 
     public void VerControles()
     {
-        panelMuestaMuestraDeControles.SetActive(true); // Muestra la interfaz verde
-        // Desbloquear y mostrar el cursor si en tu juego 3D lo tienes oculto
+        panelMuestaMuestraDeControles.SetActive(true); 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
 
-     public void VolveraMenu()
+    public void VolveraMenu()
     {
-        panelMuestaMuestraDeControles.SetActive(false); // Muestra la interfaz verde
-        // Desbloquear y mostrar el cursor si en tu juego 3D lo tienes oculto
+        panelMuestaMuestraDeControles.SetActive(false); 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
 
-    // Función para el botón "Salir"
     public void SalirJuego()
     {
         Debug.Log("Cerrando el juego...");

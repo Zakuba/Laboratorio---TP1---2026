@@ -51,6 +51,6 @@ public class ControladorPausa : MonoBehaviour
     public void VolverAlMenuPrincipal()
     {
         Time.timeScale = 1f;
-        SceneManager.LoadScene("Menu"); // Carga tu escena inicial
+        SceneManager.LoadScene("Nivel1"); // Carga tu escena inicial
     }
 }
