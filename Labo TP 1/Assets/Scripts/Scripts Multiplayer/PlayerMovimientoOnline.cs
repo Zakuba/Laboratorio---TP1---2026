@@ -93,6 +93,12 @@ private void Awake()
     {
         // Le indicamos al jugador que escuche cuando cambie una escena
         SceneManager.sceneLoaded += AlCargarEscena;
+        // Si este personaje no es el mío, apago su CharacterController.
+        // El Capsule Collider será el que reciba los disparos en su lugar.
+        if (!IsOwner)
+        {
+            controlador.enabled = false;
+        }
     }
 
     public override void OnNetworkDespawn()

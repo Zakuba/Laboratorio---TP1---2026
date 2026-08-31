@@ -15,7 +15,6 @@ GameObject:
   - component: {fileID: 2928572490270207952}
   - component: {fileID: 5078995961007626320}
   - component: {fileID: 3568025637350566999}
-  - component: {fileID: 3227285118094047097}
   - component: {fileID: -2830399331343188723}
   m_Layer: 0
   m_Name: Player
@@ -175,7 +174,7 @@ MonoBehaviour:
   RotationMaxInterpolationTime: 0.1
   ScaleLerpSmoothing: 1
   ScaleMaxInterpolationTime: 0.1
-  AuthorityMode: 0
+  AuthorityMode: 1
   TickSyncChildren: 0
   UseUnreliableDeltas: 0
   SyncPositionX: 1
@@ -221,33 +220,6 @@ MonoBehaviour:
   gravedad: -15
   multiplicadorCaida: 2
   velocidadTerminal: -50
---- !u!54 &3227285118094047097
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 932337728402713195}
-  serializedVersion: 5
-  m_Mass: 1
-  m_LinearDamping: 0
-  m_AngularDamping: 0.05
-  m_CenterOfMass: {x: 0, y: 0, z: 0}
-  m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ImplicitCom: 1
-  m_ImplicitTensor: 1
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 112
-  m_CollisionDetection: 0
 --- !u!136 &-2830399331343188723
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -409,7 +381,7 @@ Transform:
   m_GameObject: {fileID: 4601704637327713045}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.004, y: 0.458, z: 0.655}
+  m_LocalPosition: {x: -0.004, y: 0.458, z: 1.1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -601,7 +573,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerShotOnline
   ShowTopMostFoldoutHeaderGroup: 1
-  snowballPrefab: {fileID: 6554078426901775891, guid: b109ad3d506fb844f87d54d4f18022e5, type: 3}
+  snowballPrefab: {fileID: 6554078426901775891, guid: 417083f2d76838f4298f58e4b20d074a, type: 3}
   puntoDeDisparo: {fileID: 3610043682227808782}
   fuerzaLanzamiento: 25
   tiempoEntreDisparos: 1.5
