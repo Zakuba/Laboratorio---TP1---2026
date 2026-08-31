@@ -37,15 +37,14 @@ public class ControladorMenu : MonoBehaviour
     {
         Debug.Log("Uniéndose a partida...");
         NetworkManager networkManager = NetworkManager.Singleton;
-        networkManager.SceneManager.OnSynchronizeComplete -= AlCompletarSincronizacion;
-        networkManager.SceneManager.OnSynchronizeComplete += AlCompletarSincronizacion;
 
         if (!networkManager.StartClient())
         {
-            networkManager.SceneManager.OnSynchronizeComplete -= AlCompletarSincronizacion;
             return;
         }
 
+        networkManager.SceneManager.OnSynchronizeComplete -= AlCompletarSincronizacion;
+        networkManager.SceneManager.OnSynchronizeComplete += AlCompletarSincronizacion;
         OcultarMenuPrincipal();                 
     }
 
@@ -100,7 +99,11 @@ public class ControladorMenu : MonoBehaviour
         if (NetworkManager.Singleton != null)
         {
             NetworkManager.Singleton.OnClientConnectedCallback -= AlConectarHostLocal;
-            NetworkManager.Singleton.SceneManager.OnSynchronizeComplete -= AlCompletarSincronizacion;
+
+            if (NetworkManager.Singleton.SceneManager != null)
+            {
+                NetworkManager.Singleton.SceneManager.OnSynchronizeComplete -= AlCompletarSincronizacion;
+            }
         }
     }
 
