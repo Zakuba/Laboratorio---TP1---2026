@@ -1,25 +1,17 @@
 using UnityEngine;
-using Unity.Netcode;
 
-public class Snowball : NetworkBehaviour
+public class Snowball : MonoBehaviour
 {
     public float fuerzaEmpuje = 15f;
     public float tiempoDeVida = 5f; // Despawnea tras 5s si se lanza al vacío
 
-    public override void OnNetworkSpawn()
+    void Start()
     {
-        // Solo el servidor gestiona la destrucción por tiempo
-        if (IsServer)
-        {
-            Invoke(nameof(DespawnBola), tiempoDeVida);
-        }
+        Destroy(gameObject, tiempoDeVida);
     }
 
-    private void OnCollisionEnter(Collision collision)
+    void OnCollisionEnter(Collision collision)
     {
-        // Solo el servidor procesa el impacto y destruye el objeto
-        if (!IsServer) return;
-
         if (collision.gameObject.CompareTag("Player"))
         {
             Rigidbody rbObjetivo =
@@ -40,14 +32,6 @@ public class Snowball : NetworkBehaviour
             }
         }
 
-        DespawnBola();
-    }
-
-    private void DespawnBola()
-    {
-        if (NetworkObject != null && NetworkObject.IsSpawned)
-        {
-            NetworkObject.Despawn();
-        }
+        Destroy(gameObject);
     }
 }

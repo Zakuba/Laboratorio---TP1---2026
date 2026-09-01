@@ -3,29 +3,29 @@ using UnityEngine;
 
 public class NetworkUI : MonoBehaviour
 {
-    private void OnGUI()
+    [Header("Referencias")]
+    [Tooltip("El objeto que contiene los botones 'Crear partida' y 'Unirse a partida'")]
+    [SerializeField] private GameObject panelMenu;
+
+    // Llamar desde el botón "Crear partida"
+    public void OnClickHost()
     {
-        GUILayout.BeginArea(new Rect(20, 20, 180, 160));
+        NetworkManager.Singleton.StartHost();
+        OcultarMenu();
+    }
 
-        if (!NetworkManager.Singleton.IsClient && !NetworkManager.Singleton.IsServer)
+    // Llamar desde el botón "Unirse a partida"
+    public void OnClickClient()
+    {
+        NetworkManager.Singleton.StartClient();
+        OcultarMenu();
+    }
+
+    private void OcultarMenu()
+    {
+        if (panelMenu != null)
         {
-            if (GUILayout.Button("Iniciar Host", GUILayout.Height(35))) 
-                NetworkManager.Singleton.StartHost();
-
-            if (GUILayout.Button("Iniciar Server", GUILayout.Height(35))) 
-                NetworkManager.Singleton.StartServer();
-
-            if (GUILayout.Button("Unirse como Cliente", GUILayout.Height(35))) 
-                NetworkManager.Singleton.StartClient();
+            panelMenu.SetActive(false);
         }
-        else
-        {
-            GUILayout.Label("Conectado como: " + (NetworkManager.Singleton.IsHost ? "Host" : NetworkManager.Singleton.IsServer ? "Server" : "Cliente"));
-            
-            if (GUILayout.Button("Desconectar", GUILayout.Height(35))) 
-                NetworkManager.Singleton.Shutdown();
-        }
-
-        GUILayout.EndArea();
     }
 }

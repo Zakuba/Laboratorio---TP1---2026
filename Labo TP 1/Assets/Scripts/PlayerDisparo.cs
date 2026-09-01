@@ -1,9 +1,8 @@
 using UnityEngine;
-using Unity.Netcode;
 
-public class PlayerShot : NetworkBehaviour
+public class PlayerShot : MonoBehaviour
 {
-    public GameObject snowballPrefab;
+public GameObject snowballPrefab;
     public Transform puntoDeDisparo; 
     public float fuerzaLanzamiento = 25f;
     public float tiempoEntreDisparos = 1.5f; // Segundos que debe esperar
@@ -11,8 +10,6 @@ public class PlayerShot : NetworkBehaviour
 
     void Update()
     {
-        // Solo el dueño del objeto puede procesar el input
-        if (!IsOwner) return;
 
         // Si el juego está pausado (el tiempo está congelado), salimos del Update y no hacemos nada
         if (Time.timeScale == 0f)
@@ -27,7 +24,7 @@ public class PlayerShot : NetworkBehaviour
             // disparamos por última vez + el tiempo de espera.
             if (Time.time >= tiempoUltimoDisparo + tiempoEntreDisparos)
             {
-                LanzarBolaDeNieveRpc(puntoDeDisparo.position, puntoDeDisparo.rotation);
+                LanzarBolaDeNieve();
                 
                 // Registramos el momento exacto en que acabamos de disparar
                 tiempoUltimoDisparo = Time.time;
@@ -39,22 +36,14 @@ public class PlayerShot : NetworkBehaviour
         }
     }
 
-    [Rpc(SendTo.Server)]
-    private void LanzarBolaDeNieveRpc(Vector3 posicion, Quaternion rotacion)
+    void LanzarBolaDeNieve()
     {
-        GameObject bola = Instantiate(snowballPrefab, posicion, rotacion);
-
-        // Se hace spawn en la red para que aparezca en todos los clientes
-        NetworkObject netObj = bola.GetComponent<NetworkObject>();
-        if (netObj != null)
-        {
-            netObj.Spawn();
-        }
+        GameObject bola = Instantiate(snowballPrefab, puntoDeDisparo.position, puntoDeDisparo.rotation);
 
         Rigidbody rbBola = bola.GetComponent<Rigidbody>();
         if (rbBola != null)
         {
-            rbBola.linearVelocity = rotacion * Vector3.forward * fuerzaLanzamiento;
+            rbBola.linearVelocity = puntoDeDisparo.forward * fuerzaLanzamiento;
         }
     }
 }

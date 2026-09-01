@@ -1,7 +1,9 @@
 using Unity.Mathematics;
 using UnityEngine;
+using Unity.Netcode; // 1. Importamos Netcode
 
-public class CameraFollow : MonoBehaviour
+// 2. Heredamos de NetworkBehaviour en lugar de MonoBehaviour
+public class CameraFollowOnline : NetworkBehaviour 
 {
     [Header("Ajustes")]
     [SerializeField] public float Sensibilidad = 100;
@@ -11,20 +13,35 @@ public class CameraFollow : MonoBehaviour
     [SerializeField] public float RotacionHorizontal = 0;
     [SerializeField] public float RotacionVertical = 0;
 
-
-    void Start()
+    // 3. Usamos OnNetworkSpawn en lugar de Start para inicializar cosas de red
+    public override void OnNetworkSpawn()
     {
-        // Bloquea el cursor en el centro de la pantalla
-        Cursor.lockState = CursorLockMode.Locked;
+        if (IsOwner)
+        {
+            // Si este es MI jugador, bloqueo y oculto el cursor
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+        else
+        {
+            // Si es el jugador de otro cliente, le apago la cámara y el audio
+            Camera cam = GetComponent<Camera>();
+            if (cam != null) cam.enabled = false;
 
-        // Oculta el cursor mientras juegas
-        Cursor.visible = false;
+            AudioListener listener = GetComponent<AudioListener>();
+            if (listener != null) listener.enabled = false;
 
+            // Apago este script para que no se ejecute en los clones
+            this.enabled = false; 
+        }
     }
 
     void Update()
     {
-        //Nos dan los valores del mause para mover 
+        // 4. Si no soy el dueño de este jugador, ignoro los inputs de mouse
+        if (!IsOwner) return;
+
+        //Nos dan los valores del mouse para mover 
         float ValorX = Input.GetAxis("Mouse X") * Sensibilidad * Time.deltaTime;
         float ValorY = Input.GetAxis("Mouse Y") * Sensibilidad * Time.deltaTime;
 
@@ -36,7 +53,7 @@ public class CameraFollow : MonoBehaviour
         RotacionVertical = math.clamp(RotacionVertical, -80, 80);
 
 
-        //Hace la rotaion vertical fluida
+        //Hace la rotacion vertical fluida
         transform.localRotation = Quaternion.Euler(RotacionVertical, 0, 0);
 
 

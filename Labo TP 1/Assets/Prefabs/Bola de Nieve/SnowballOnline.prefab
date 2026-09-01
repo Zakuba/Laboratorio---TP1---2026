@@ -13,11 +13,11 @@ GameObject:
   - component: {fileID: 5776485392768204960}
   - component: {fileID: 834960723652698789}
   - component: {fileID: 3964744907781056444}
-  - component: {fileID: -1734064719313554004}
   - component: {fileID: 8411934953761020885}
   - component: {fileID: 5880157436671403939}
+  - component: {fileID: 3418703693488888414}
   m_Layer: 0
-  m_Name: Snowball
+  m_Name: SnowballOnline
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -143,20 +143,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 2
---- !u!114 &-1734064719313554004
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6554078426901775891}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dd4d438b44d49e24ebc768e130b9eb14, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Snowball
-  fuerzaEmpuje: 15
-  tiempoDeVida: 5
 --- !u!114 &8411934953761020885
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -169,7 +155,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2867746757
+  GlobalObjectIdHash: 431112007
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -230,3 +216,18 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
+--- !u!114 &3418703693488888414
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6554078426901775891}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 388d82d0588e9e44082c03031d2537cb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BolaDeNieveOnline
+  ShowTopMostFoldoutHeaderGroup: 1
+  fuerzaEmpuje: 15
+  tiempoDeVida: 5

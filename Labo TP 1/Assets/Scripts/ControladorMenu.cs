@@ -4,60 +4,57 @@ using Unity.Netcode;
 
 public class ControladorMenu : MonoBehaviour
 {
-    [Header("Configuración de Escena")]
-    [SerializeField] private string nombreEscenaJuego = "Nivel1";
-
-    [Header("Asigna aquí el Panel de Muestra de Controles desde el Inspector")]
+    [Header("Paneles de Interfaz")]
+    public GameObject panelMenuPrincipal; 
     public GameObject panelMuestaMuestraDeControles;
+    
+    [Header("HUD del Juego")]
+    [Tooltip("Asigna aquí la Mira del Canvas para que aparezca al jugar")]
+    public GameObject miraHUD; // <-- NUEVA VARIABLE PARA LA MIRA
 
     public void JugarSinglePlayer()
     {
-        SceneManager.LoadScene(nombreEscenaJuego);
+        SceneManager.LoadScene("SampleScene");
     }
 
     public void IniciarHost()
     {
-        if (NetworkManager.Singleton != null)
-        {
-            NetworkManager.Singleton.StartHost();
-            NetworkManager.Singleton.SceneManager.LoadScene("Nivel1", LoadSceneMode.Single);
-        }
-        else
-        {
-            Debug.LogError("No se encontró NetworkManager en la escena.");
-        }
+        Debug.Log("Iniciando como Host...");
+        NetworkManager.Singleton.StartHost(); 
+        OcultarMenuPrincipal();               
+        
+        // Encendemos la mira al instante de iniciar
+        if (miraHUD != null) miraHUD.SetActive(true); 
     }
 
     public void UnirseHost()
     {
-        if (NetworkManager.Singleton != null)
+        Debug.Log("Uniéndose a partida...");
+        NetworkManager.Singleton.StartClient(); 
+        OcultarMenuPrincipal();                 
+        
+        // Encendemos la mira al instante de unirnos
+        if (miraHUD != null) miraHUD.SetActive(true); 
+    }
+
+    private void OcultarMenuPrincipal()
+    {
+        if (panelMenuPrincipal != null)
         {
-            NetworkManager.Singleton.StartClient();
-        }
-        else
-        {
-            Debug.LogError("No se encontró NetworkManager en la escena.");
+            panelMenuPrincipal.SetActive(false);
         }
     }
 
     public void VerControles()
     {
-        if (panelMuestaMuestraDeControles != null)
-        {
-            panelMuestaMuestraDeControles.SetActive(true);
-        }
-
+        panelMuestaMuestraDeControles.SetActive(true); 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
 
     public void VolveraMenu()
     {
-        if (panelMuestaMuestraDeControles != null)
-        {
-            panelMuestaMuestraDeControles.SetActive(false);
-        }
-
+        panelMuestaMuestraDeControles.SetActive(false); 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }

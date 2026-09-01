@@ -1,29 +1,40 @@
 using Unity.Mathematics;
 using UnityEngine;
+using Unity.Netcode; // 1. Importar Netcode
 
-public class CameraFollow : MonoBehaviour
+// 2. Heredar de NetworkBehaviour
+public class PuntoDeDisparoOnline : NetworkBehaviour 
 {
     [Header("Ajustes")]
     [SerializeField] public float Sensibilidad = 100;
-    [SerializeField] public Transform Player;
 
     [Header("Estados")]
     [SerializeField] public float RotacionHorizontal = 0;
     [SerializeField] public float RotacionVertical = 0;
 
-
-    void Start()
+    // 3. Usar OnNetworkSpawn en lugar de Start
+    public override void OnNetworkSpawn()
     {
-        // Bloquea el cursor en el centro de la pantalla
-        Cursor.lockState = CursorLockMode.Locked;
+        if (IsOwner)
+        {
+            // Bloquea el cursor en el centro de la pantalla
+            Cursor.lockState = CursorLockMode.Locked;
 
-        // Oculta el cursor mientras juegas
-        Cursor.visible = false;
-
+            // Oculta el cursor mientras juegas
+            Cursor.visible = false;
+        }
+        else
+        {
+            // Si es el clon de otro jugador, apagamos este script
+            this.enabled = false;
+        }
     }
 
     void Update()
     {
+        // 4. Si no soy el dueño, no proceso el movimiento del mouse
+        if (!IsOwner) return;
+
         //Nos dan los valores del mause para mover 
         float ValorX = Input.GetAxis("Mouse X") * Sensibilidad * Time.deltaTime;
         float ValorY = Input.GetAxis("Mouse Y") * Sensibilidad * Time.deltaTime;
@@ -38,17 +49,5 @@ public class CameraFollow : MonoBehaviour
 
         //Hace la rotaion vertical fluida
         transform.localRotation = Quaternion.Euler(RotacionVertical, 0, 0);
-
-
-        //Hace la rotacion horizontal
-        if (Player != null)
-        {
-            Player.Rotate(Vector3.up * ValorX);
-        }
-        else
-        {
-            //Si no tiene asignado el player avisas en consola
-            Debug.LogWarning("Camara: asigna (Player) en el Inspector.");
-        }
     }
 }
