@@ -1,7 +1,6 @@
 using UnityEngine;
-using Unity.Netcode; // 1. Importar Netcode
+using Unity.Netcode;
 
-// 2. Heredar de NetworkBehaviour
 public class PlayerShotOnline : NetworkBehaviour
 {
     public GameObject snowballPrefab;
@@ -12,19 +11,20 @@ public class PlayerShotOnline : NetworkBehaviour
 
     void Update()
     {
-        // 3. Si no es mi jugador, ignoro los clics para no disparar por otros
         if (!IsOwner) return;
-
-        if (Time.timeScale == 0f)
-        {
-            return;
-        }
+        if (Time.timeScale == 0f) return;
         
         if (Input.GetMouseButtonDown(0))
         {
             if (Time.time >= tiempoUltimoDisparo + tiempoEntreDisparos)
             {
-                // 4. Llamamos a un ServerRpc para que el Host instancie la bola
+                // 1. NUEVO: Si somos un cliente puro, instanciamos la visual falsa al instante para no tener lag
+                if (!IsServer)
+                {
+                    LanzarBolaVisualLocal(transform.forward);
+                }
+
+                // 2. Llamamos al ServerRpc para generar la bola real (físicas y daños)
                 LanzarBolaDeNieveServerRpc(transform.forward);
                 
                 tiempoUltimoDisparo = Time.time;
@@ -36,17 +36,36 @@ public class PlayerShotOnline : NetworkBehaviour
         }
     }
 
-    // 5. El ServerRpc le dice al servidor que ejecute este código
+    // NUEVO METODO: Crea un "fantasma" que solo tú ves, para dar la sensación de disparo instantáneo
+    private void LanzarBolaVisualLocal(Vector3 direccionAim)
+    {
+        direccionAim.Normalize();
+        GameObject bolaFalsa = Instantiate(snowballPrefab, puntoDeDisparo.position, Quaternion.LookRotation(direccionAim, Vector3.up));
+        
+        // Destruimos la lógica de red y online para que sea un simple adorno local
+        if (bolaFalsa.TryGetComponent(out NetworkObject netObj)) Destroy(netObj);
+        if (bolaFalsa.TryGetComponent(out BolaDeNieveOnline scriptOnline)) Destroy(scriptOnline);
+
+        // Hacemos que sea un trigger para que la falsa no te empuje objetos físicamente en tu pantalla local
+        if (bolaFalsa.TryGetComponent(out Collider col)) col.isTrigger = true;
+
+        Rigidbody rbFalsa = bolaFalsa.GetComponent<Rigidbody>();
+        if (rbFalsa != null)
+        {
+            rbFalsa.isKinematic = false; 
+            rbFalsa.linearVelocity = direccionAim * fuerzaLanzamiento;
+        }
+
+        // Destruimos la falsa localmente antes de que llegue muy lejos
+        Destroy(bolaFalsa, 1.5f);
+    }
+
     [ServerRpc]
     void LanzarBolaDeNieveServerRpc(Vector3 direccionAim)
     {
-        if (!DireccionValida(direccionAim))
-        {
-            return;
-        }
+        if (!DireccionValida(direccionAim)) return;
 
         direccionAim.Normalize();
-
         GameObject bola = Instantiate(
             snowballPrefab,
             puntoDeDisparo.position,
@@ -59,26 +78,18 @@ public class PlayerShotOnline : NetworkBehaviour
             rbBola.linearVelocity = direccionAim * fuerzaLanzamiento;
         }
 
-        // 6. Spawn() sincroniza el objeto en la red para que todos lo vean
         NetworkObject netObj = bola.GetComponent<NetworkObject>();
         if (netObj != null)
         {
-            netObj.Spawn();
-        }
-        else
-        {
-            Debug.LogWarning("El prefab de la bola de nieve necesita un componente NetworkObject para verse en red.");
+            // CAMBIO CLAVE: Le damos la "propiedad" de la bola real al cliente que apretó el botón
+            netObj.SpawnWithOwnership(OwnerClientId);
         }
     }
 
     private static bool DireccionValida(Vector3 direccion)
     {
-        return !float.IsNaN(direccion.x)
-            && !float.IsNaN(direccion.y)
-            && !float.IsNaN(direccion.z)
-            && !float.IsInfinity(direccion.x)
-            && !float.IsInfinity(direccion.y)
-            && !float.IsInfinity(direccion.z)
+        return !float.IsNaN(direccion.x) && !float.IsNaN(direccion.y) && !float.IsNaN(direccion.z)
+            && !float.IsInfinity(direccion.x) && !float.IsInfinity(direccion.y) && !float.IsInfinity(direccion.z)
             && direccion.sqrMagnitude > 0.0001f;
     }
 }
