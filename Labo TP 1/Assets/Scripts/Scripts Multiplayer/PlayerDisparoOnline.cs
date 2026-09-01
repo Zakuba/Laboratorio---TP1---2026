@@ -9,21 +9,18 @@ public class PlayerShotOnline : NetworkBehaviour
     public float tiempoEntreDisparos = 1.5f; 
     private float tiempoUltimoDisparo = 0f; 
 
-    void Update()
+void Update()
     {
         if (!IsOwner) return;
 
-        if (Time.timeScale == 0f)
-        {
-            return;
-        }
+        if (Time.timeScale == 0f) return;
         
         if (Input.GetMouseButtonDown(0))
         {
             if (Time.time >= tiempoUltimoDisparo + tiempoEntreDisparos)
             {
-                // Llamamos a un ÚNICO ServerRpc para instanciar la bola
-                LanzarBolaDeNieveServerRpc();
+                // 1. CAMBIO AQUÍ: Le enviamos la posición y rotación exactas al servidor
+                LanzarBolaDeNieveServerRpc(puntoDeDisparo.position, puntoDeDisparo.rotation);
                 
                 tiempoUltimoDisparo = Time.time;
             }
@@ -34,29 +31,30 @@ public class PlayerShotOnline : NetworkBehaviour
         }
     }
 
+    // 2. CAMBIO AQUÍ: El ServerRpc ahora recibe la posición y rotación
     [ServerRpc]
-    void LanzarBolaDeNieveServerRpc()
+    void LanzarBolaDeNieveServerRpc(Vector3 posicionCliente, Quaternion rotacionCliente, ServerRpcParams rpcParams = default)
     {
-        // 1. El servidor instancia la bola usando tu variable snowballPrefab
-        GameObject bola = Instantiate(snowballPrefab, puntoDeDisparo.position, puntoDeDisparo.rotation);
+        // Usamos las coordenadas que mandó el cliente, no las locales del servidor
+        GameObject bola = Instantiate(snowballPrefab, posicionCliente, rotacionCliente);
 
-        // 2. Le aplicamos la fuerza física
-        Rigidbody rbBola = bola.GetComponent<Rigidbody>();
-        if (rbBola != null)
+        BolaDeNieveOnline scriptBola = bola.GetComponent<BolaDeNieveOnline>();
+        if (scriptBola != null)
         {
-            rbBola.linearVelocity = puntoDeDisparo.forward * fuerzaLanzamiento;
+            scriptBola.idDisparador = rpcParams.Receive.SenderClientId; 
         }
 
-        // 3. Sincronizamos en la red ASIGNANDO LA PROPIEDAD a quien disparó
         NetworkObject netObj = bola.GetComponent<NetworkObject>();
         if (netObj != null)
         {
-            // Esto es lo que soluciona el problema de que desaparezca:
-            netObj.SpawnWithOwnership(OwnerClientId);
+            netObj.Spawn(true);
         }
-        else
+
+        Rigidbody rbBola = bola.GetComponent<Rigidbody>();
+        if (rbBola != null)
         {
-            Debug.LogWarning("El prefab de la bola de nieve necesita un componente NetworkObject para verse en red.");
+            // Usamos la rotación del cliente para saber hacia dónde mirar
+            rbBola.linearVelocity = rotacionCliente * Vector3.forward * fuerzaLanzamiento;
         }
     }
 }

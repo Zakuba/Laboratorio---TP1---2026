@@ -496,13 +496,15 @@ private void Awake()
 
     }
 
-// [ClientRpc] hace que el Servidor envíe esta orden a los Clientes
+// Añadimos ClientRpcParams para poder enviarlo a un jugador específico
     [ClientRpc]
-    public void AplicarEmpujeClientRpc(Vector3 fuerza)
+    public void AplicarEmpujeClientRpc(Vector3 fuerza, ClientRpcParams clientRpcParams = default)
     {
-        // Solo el dueño de este personaje aplica el empuje físicamente
         if (!IsOwner) return;
 
+        // Este mensaje DEBE aparecer en la consola de quien fue golpeado
+        Debug.Log($"¡Fui golpeado! Recibiendo fuerza de empuje: {fuerza.magnitude}");
+        
         fuerzaEmpujeActual += fuerza;
     }
 } 
