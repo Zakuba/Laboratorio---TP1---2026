@@ -4,7 +4,7 @@ using UnityEngine;
 public class NetworkUI : MonoBehaviour
 {
     [Header("Referencias")]
-    [Tooltip("El objeto que contiene los botones 'Crear partida' y 'Unirse a partida' (por ejemplo, un panel/objeto vacío que sea padre de ambos botones).")]
+    [Tooltip("El objeto que contiene los botones 'Crear partida' y 'Unirse a partida'")]
     [SerializeField] private GameObject panelMenu;
 
     // Llamar desde el botón "Crear partida"

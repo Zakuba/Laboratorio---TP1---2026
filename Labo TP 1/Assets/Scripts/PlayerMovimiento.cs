@@ -1,8 +1,7 @@
-using Unity.Netcode;
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
-public class PlayerMovimiento : NetworkBehaviour
+public class PlayerMovimiento : MonoBehaviour
 {
     [Header("Referencias")]
     [SerializeField] private Transform camara;
@@ -49,29 +48,11 @@ public class PlayerMovimiento : NetworkBehaviour
         }
 
         ultimoPuntoReaparicion = puntoReaparicionInicial;
-    }
 
-    public override void OnNetworkSpawn()
-    {
-        // Si este personaje NO es el nuestro (es el de otro jugador conectado),
-        // no tiene sentido tener el CharacterController local activo procesando
-        // nada: su posición/rotación va a llegar sincronizada por NetworkTransform.
-        if (!IsOwner)
-        {
-            if (controlador != null)
-            {
-                controlador.enabled = false;
-            }
-        }
     }
 
     private void Update()
     {
-        // Clave para multiplayer: cada cliente solo controla SU PROPIO personaje.
-        // Sin este chequeo, el mismo teclado terminaría moviendo a todos los
-        // Player que existan localmente (el propio y las copias de los demás).
-        if (!IsOwner) return;
-
         // Si el jugador cayó y reapareció, terminamos este frame
         if (DetectarCaida())
         {
@@ -108,7 +89,7 @@ public class PlayerMovimiento : NetworkBehaviour
         return false;
     }
 
-    private void Reaparecer()
+    public void Reaparecer()
     {
         if (ultimoPuntoReaparicion == null)
         {
