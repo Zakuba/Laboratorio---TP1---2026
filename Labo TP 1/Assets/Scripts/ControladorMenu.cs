@@ -89,6 +89,7 @@ public class ControladorMenu : MonoBehaviour
         if (canvasHUD != null && camaraLocal != null)
         {
             canvasHUD.worldCamera = camaraLocal;
+            canvasHUD.planeDistance = 1f;
         }
 
         miraHUD.SetActive(true);
