@@ -155,7 +155,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 431112007
+  GlobalObjectIdHash: 1959284839
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -231,3 +231,4 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   fuerzaEmpuje: 15
   tiempoDeVida: 5
+  particulasExplosion: {fileID: 5604803327550254009, guid: 32ffe9c92d625cd489b98899ea2bc16e, type: 3}

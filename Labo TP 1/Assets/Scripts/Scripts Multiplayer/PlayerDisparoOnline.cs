@@ -4,16 +4,16 @@ using Unity.Netcode;
 public class PlayerShotOnline : NetworkBehaviour
 {
     public GameObject snowballPrefab;
-    public Transform puntoDeDisparo; 
+    public Transform puntoDeDisparo;
     public float fuerzaLanzamiento = 25f;
-    public float tiempoEntreDisparos = 1.5f; 
-    private float tiempoUltimoDisparo = 0f; 
+    public float tiempoEntreDisparos = 1.5f;
+    private float tiempoUltimoDisparo = 0f;
 
     void Update()
     {
         if (!IsOwner) return;
         if (Time.timeScale == 0f) return;
-        
+
         if (Input.GetMouseButtonDown(0))
         {
             if (Time.time >= tiempoUltimoDisparo + tiempoEntreDisparos)
@@ -26,7 +26,7 @@ public class PlayerShotOnline : NetworkBehaviour
 
                 // 2. Llamamos al ServerRpc para generar la bola real (físicas y daños)
                 LanzarBolaDeNieveServerRpc(transform.forward);
-                
+
                 tiempoUltimoDisparo = Time.time;
             }
             else
@@ -41,7 +41,7 @@ public class PlayerShotOnline : NetworkBehaviour
     {
         direccionAim.Normalize();
         GameObject bolaFalsa = Instantiate(snowballPrefab, puntoDeDisparo.position, Quaternion.LookRotation(direccionAim, Vector3.up));
-        
+
         // Destruimos la lógica de red y online para que sea un simple adorno local
         if (bolaFalsa.TryGetComponent(out NetworkObject netObj)) Destroy(netObj);
         if (bolaFalsa.TryGetComponent(out BolaDeNieveOnline scriptOnline)) Destroy(scriptOnline);
@@ -52,7 +52,7 @@ public class PlayerShotOnline : NetworkBehaviour
         Rigidbody rbFalsa = bolaFalsa.GetComponent<Rigidbody>();
         if (rbFalsa != null)
         {
-            rbFalsa.isKinematic = false; 
+            rbFalsa.isKinematic = false;
             rbFalsa.linearVelocity = direccionAim * fuerzaLanzamiento;
         }
 
