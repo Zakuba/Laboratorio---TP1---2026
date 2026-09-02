@@ -1,0 +1,12 @@
+fileFormatVersion: 2
+guid: 4cd74644ee22bdb42a0b90b9e64604b6
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - barraRecarga: {fileID: 3985933783097272028, guid: e0e818448800ad7489e091bcbe33c19f, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
