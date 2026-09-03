@@ -131,19 +131,19 @@ private void IniciarPartida()
         return Mathf.Max(0, Mathf.CeilToInt((float)restante));
     }
 
-    public bool IntentarDeclararVictoria()
-    {
-        if (!IsServer)
-            return false;
+ public bool IntentarDeclararVictoria()
+{
+    if (!IsServer)
+        return false;
 
-        if (Estado.Value != EstadoPartida.Jugando)
-            return false;
+    if (Estado.Value != EstadoPartida.Jugando)
+        return false;
 
-        Estado.Value = EstadoPartida.Finalizada;
-        Resultado.Value = ResultadoPartida.Victoria;
+    Estado.Value = EstadoPartida.Finalizada;
+    Resultado.Value = ResultadoPartida.Victoria;
 
-        return true;
-    }
+    return true;
+}
 
     private void AlConectarCliente(ulong clientId)
 {
