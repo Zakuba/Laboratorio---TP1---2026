@@ -11,14 +11,22 @@ public class HUDTiempoOnline : MonoBehaviour
 
     [SerializeField]
     private TMP_Text textoResultado;
+    [SerializeField]
+    private GameObject panelResultado;
+    [SerializeField] private GameObject panelTiempo;
 
-    private void Start()
+private void Start()
+{
+    if (panelTiempo != null)
     {
-        if (textoResultado != null)
-        {
-            textoResultado.gameObject.SetActive(false);
-        }
+        panelTiempo.SetActive(false);
     }
+
+    if (panelResultado != null)
+    {
+        panelResultado.SetActive(false);
+    }
+}
 
     private void Update()
     {
@@ -35,17 +43,25 @@ private void ActualizarTiempo()
 {
     if (!gestorPartida.TiempoLimiteActivo.Value)
     {
-        textoTiempo.gameObject.SetActive(false);
+        if (panelTiempo != null)
+            panelTiempo.SetActive(false);
+
         return;
     }
 
-    if (gestorPartida.Estado.Value == EstadoPartida.Esperando)
+    if (gestorPartida.Estado.Value != EstadoPartida.Jugando)
     {
-        textoTiempo.gameObject.SetActive(false);
+        if (panelTiempo != null)
+            panelTiempo.SetActive(false);
+
         return;
     }
 
-    textoTiempo.gameObject.SetActive(true);
+    if (panelTiempo != null)
+        panelTiempo.SetActive(true);
+
+    if (textoTiempo != null)
+        textoTiempo.gameObject.SetActive(true);
 
     int segundosTotales =
         gestorPartida.ObtenerSegundosRestantes();
@@ -53,21 +69,24 @@ private void ActualizarTiempo()
     int minutos = segundosTotales / 60;
     int segundos = segundosTotales % 60;
 
-    textoTiempo.text =
-        $"{minutos:00}:{segundos:00}";
+    textoTiempo.text = $"{minutos:00}:{segundos:00}";
 }
 
-    private void ActualizarResultado()
+private void ActualizarResultado()
+{
+    bool tiempoAgotado =
+        gestorPartida.Estado.Value == EstadoPartida.Finalizada &&
+        gestorPartida.Resultado.Value == ResultadoPartida.TiempoAgotado;
+
+    if (panelResultado != null)
+        panelResultado.SetActive(tiempoAgotado);
+
+    if (tiempoAgotado)
     {
-        bool tiempoAgotado =
-            gestorPartida.Estado.Value == EstadoPartida.Finalizada &&
-            gestorPartida.Resultado.Value == ResultadoPartida.TiempoAgotado;
+        if (panelTiempo != null)
+            panelTiempo.SetActive(false);
 
-        textoResultado.gameObject.SetActive(tiempoAgotado);
-
-        if (tiempoAgotado)
-        {
-            textoResultado.text = "TIEMPO AGOTADO";
-        }
+        textoResultado.text = "TIEMPO AGOTADO";
     }
+}
 }
