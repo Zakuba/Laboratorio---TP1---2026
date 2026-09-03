@@ -135,7 +135,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1852758265
+  GlobalObjectIdHash: 2064865654
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -210,13 +210,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovimientoOnline
   ShowTopMostFoldoutHeaderGroup: 1
   camara: {fileID: 1116022577073450806}
-  velocidadMaxima: 6
-  aceleracion: 25
-  desaceleracion: 30
+  velocidadMaxima: 4
+  aceleracion: 15
+  desaceleracion: 20
   distanciaDeteccionSuperficie: 1.3
   puntoReaparicionInicial: {fileID: 0}
   limiteCaida: -10
-  alturaSalto: 1.5
+  alturaSalto: 1
   gravedad: -15
   multiplicadorCaida: 2
   velocidadTerminal: -50
@@ -504,7 +504,7 @@ MonoBehaviour:
     m_Bits: 1
   m_VolumeTrigger: {fileID: 0}
   m_VolumeFrameworkUpdateModeOption: 2
-  m_RenderPostProcessing: 0
+  m_RenderPostProcessing: 1
   m_Antialiasing: 0
   m_AntialiasingQuality: 2
   m_StopNaN: 0
@@ -538,7 +538,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraFollowOnline
   ShowTopMostFoldoutHeaderGroup: 1
-  Sensibilidad: 500
+  Sensibilidad: 100
   Player: {fileID: 1338203744928193902}
   RotacionHorizontal: 0
   RotacionVertical: 0

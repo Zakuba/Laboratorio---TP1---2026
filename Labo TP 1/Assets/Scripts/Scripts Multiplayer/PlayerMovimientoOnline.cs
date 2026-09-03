@@ -13,6 +13,8 @@ public class PlayerMovimientoOnline : NetworkBehaviour
     [Header("Movimiento Base")]
     [SerializeField] private float velocidadMaxima = 6f;
 
+    private bool movimientoBloqueado = false;
+
     [Header("Aceleración y Desaceleración")]
     [SerializeField] private float aceleracion = 25f; 
     [SerializeField] private float desaceleracion = 30f; 
@@ -68,6 +70,11 @@ private void Awake()
     {
         // 3. ¡MUY IMPORTANTE! Si no soy el dueño, no proceso movimiento ni físicas.
         if (!IsOwner) return;
+
+        if (movimientoBloqueado)
+        {
+            return;
+        }
 
         // Si el jugador cayó y reapareció, terminamos este frame
         if (DetectarCaida())
@@ -283,5 +290,32 @@ private void Awake()
     {
         ultimoPuntoReaparicion = nuevoPuntoReaparicion;
         Debug.Log("Checkpoint actualizado.");
+    }
+    public void Teletransportar(Transform destino)
+    {
+        if (!IsOwner)
+            return;
+
+        controlador.enabled = false;
+
+        transform.position = destino.position;
+
+        velocidadVertical = 0f;
+        velocidadPlanoActual = Vector3.zero;
+        velocidadKnockback = Vector3.zero;
+
+        controlador.enabled = true;
+    }
+
+    public void BloquearMovimiento()
+    {
+        if (!IsOwner)
+            return;
+
+        movimientoBloqueado = true;
+
+        velocidadPlanoActual = Vector3.zero;
+        velocidadKnockback = Vector3.zero;
+        velocidadVertical = 0f;
     }
 }
