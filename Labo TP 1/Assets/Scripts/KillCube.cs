@@ -10,9 +10,10 @@ public class KillCube : MonoBehaviour
         {
             Debug.Log("¡MATANDO AL JUGADOR!");
 
-            PlayerMovimiento jugador = other.GetComponent<PlayerMovimiento>();
+            PlayerMovimientoOnline jugador =
+                other.GetComponentInParent<PlayerMovimientoOnline>();
 
-            if (jugador != null)
+            if (jugador != null && jugador.IsOwner)
             {
                 jugador.Reaparecer();
             }
