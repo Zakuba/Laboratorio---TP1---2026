@@ -126,27 +126,28 @@ private void Awake()
         SceneManager.sceneLoaded -= AlCargarEscena;
     }
 
-    public void AplicarKnockbackDesdeServidor(Vector3 impulso)
+// ==============================================================
+    // LÓGICA DE EMPUJE (KNOCKBACK) - PREDICCIÓN LOCAL (Cero Lag)
+    // ==============================================================
+
+    // Llamado por el Servidor
+    public void AplicarKnockbackServerAuthoritative(Vector3 impulso)
     {
         if (!IsServer) return;
 
-        ClientRpcParams parametros = new ClientRpcParams
+        // Si el Host es el que recibe el bolazo, se aplica el empuje a sí mismo.
+        // Si es un Cliente, el servidor no hace nada porque el Cliente se empujará solo.
+        if (IsOwner)
         {
-            Send = new ClientRpcSendParams
-            {
-                TargetClientIds = new[] { OwnerClientId }
-            }
-        };
-
-        AplicarKnockbackClientRpc(impulso, parametros);
+            velocidadKnockback += impulso;
+        }
     }
 
-    [ClientRpc]
-    private void AplicarKnockbackClientRpc(
-        Vector3 impulso,
-        ClientRpcParams clientRpcParams = default)
+    // Llamado localmente por el Cliente
+    public void AplicarKnockbackPredictedLocal(Vector3 impulso)
     {
-        if (!IsOwner) return;
+        // El cliente puro se empuja a sí mismo al instante
+        if (!IsClient || !IsOwner || IsServer) return;
 
         velocidadKnockback += impulso;
     }

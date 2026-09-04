@@ -14,7 +14,19 @@ public class BolaDeNieveOnline : NetworkBehaviour
 
         if (rigidbodyBola != null)
         {
+            // El servidor maneja las físicas, los clientes solo lo ven moverse
             rigidbodyBola.isKinematic = !IsServer;
+        }
+
+        // 1. CAMBIO VISUAL: Si yo disparé esto (!IsServer && IsOwner), ya estoy viendo mi bola falsa.
+        // Por lo tanto, apago el modelo 3D de esta bola real para no ver doble.
+        if (IsOwner && !IsServer)
+        {
+            Renderer renderBola = GetComponent<Renderer>();
+            if (renderBola != null)
+            {
+                renderBola.enabled = false;
+            }
         }
 
         if (IsServer)
@@ -25,36 +37,45 @@ public class BolaDeNieveOnline : NetworkBehaviour
 
     private void OnCollisionEnter(Collision colision)
     {
-        if (!IsServer) return;
-
-        // Obtenemos el punto exacto donde ocurrió el impacto
-        Vector3 posicionImpacto = colision.contacts[0].point;
-
-        // Avisamos a todos los clientes que reproduzcan la explosión
-        ReproducirExplosionClientRpc(posicionImpacto);
-
         if (colision.gameObject.CompareTag("Player"))
         {
-            PlayerMovimientoOnline jugadorGolpeado =
-                colision.gameObject.GetComponentInParent<PlayerMovimientoOnline>();
+            NetworkObject netObjGolpeado = colision.gameObject.GetComponentInParent<NetworkObject>();
 
-            if (jugadorGolpeado != null)
+            if (netObjGolpeado != null)
             {
-                Vector3 direccionEmpuje =
-                    jugadorGolpeado.transform.position - transform.position;
+                Vector3 direccionEmpuje = netObjGolpeado.transform.position - transform.position;
+                direccionEmpuje.y = Mathf.Max(direccionEmpuje.y, 0.35f); 
+                Vector3 fuerzaFinal = direccionEmpuje.normalized * fuerzaEmpuje;
 
-                direccionEmpuje.y = Mathf.Max(direccionEmpuje.y, 0.35f);
-
-                if (direccionEmpuje.sqrMagnitude > 0.0001f)
+                // PREDICCIÓN LOCAL
+                if (IsClient && netObjGolpeado.IsOwner)
                 {
-                    jugadorGolpeado.AplicarKnockbackDesdeServidor(
-                        direccionEmpuje.normalized * fuerzaEmpuje
-                    );
+                    var movimiento = netObjGolpeado.GetComponent<PlayerMovimientoOnline>();
+                    if (movimiento != null)
+                    {
+                        movimiento.AplicarKnockbackPredictedLocal(fuerzaFinal);
+                    }
+                }
+
+                // AUTORIDAD DEL SERVIDOR
+                if (IsServer)
+                {
+                    var movimiento = netObjGolpeado.GetComponent<PlayerMovimientoOnline>();
+                    if (movimiento != null)
+                    {
+                        movimiento.AplicarKnockbackServerAuthoritative(fuerzaFinal);
+                    }
                 }
             }
         }
 
-        DestruirEnRed();
+        // 2. CAMBIO DE EXPLOSIÓN: Solo el servidor llama al RPC de explotar y luego destruye la bola
+        if (IsServer)
+        {
+            // Avisamos a todos los clientes que reproduzcan las partículas antes de borrar la bola
+            ReproducirExplosionClientRpc(transform.position);
+            DestruirEnRed();
+        }
     }
 
     [ClientRpc]
@@ -62,8 +83,7 @@ public class BolaDeNieveOnline : NetworkBehaviour
     {
         if (particulasExplosion == null) return;
 
-        GameObject explosion =
-            Instantiate(particulasExplosion, posicion, Quaternion.identity);
+        GameObject explosion = Instantiate(particulasExplosion, posicion, Quaternion.identity);
 
         // Si el Particle System no se destruye solo
         Destroy(explosion, 2f);
