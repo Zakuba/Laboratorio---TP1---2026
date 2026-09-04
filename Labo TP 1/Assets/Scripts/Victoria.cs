@@ -22,9 +22,9 @@ private void OnTriggerEnter(Collider other)
     SolicitarVictoriaServerRpc();
 }
 
-[ServerRpc(RequireOwnership = false)]
+[Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
 private void SolicitarVictoriaServerRpc(
-    ServerRpcParams rpcParams = default)
+    RpcParams rpcParams = default)
 {
     if (gestorPartida == null)
         return;

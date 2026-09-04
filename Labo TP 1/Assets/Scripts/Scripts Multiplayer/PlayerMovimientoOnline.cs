@@ -43,6 +43,8 @@ public class PlayerMovimientoOnline : NetworkBehaviour
 
     private float velocidadVertical;
 
+    private bool movimientoBloqueadoHost = false;
+
 private void Awake()
     {
         controlador = GetComponent<CharacterController>();
@@ -70,6 +72,8 @@ private void Awake()
     {
         // 3. ¡MUY IMPORTANTE! Si no soy el dueño, no proceso movimiento ni físicas.
         if (!IsOwner) return;
+
+        VerificarBloqueoGlobal();
 
         if (movimientoBloqueado)
         {
@@ -222,6 +226,9 @@ private void Awake()
 
     private Vector3 CalcularMovimientoEnPlano()
     {
+        // Si está bloqueado, no procesa las teclas de WASD y no se mueve
+        if (movimientoBloqueadoHost) return Vector3.zero;
+
         float valorHorizontal = Input.GetAxisRaw("Horizontal");
         float valorVertical = Input.GetAxisRaw("Vertical");
 
@@ -265,7 +272,7 @@ private void Awake()
                 velocidadVertical = -2f;
             }
 
-            if (Input.GetButtonDown("Jump"))
+            if (!movimientoBloqueadoHost && Input.GetButtonDown("Jump"))
             {
                 velocidadVertical = Mathf.Sqrt(alturaSalto * -2f * gravedad);
             }
@@ -317,5 +324,48 @@ private void Awake()
         velocidadPlanoActual = Vector3.zero;
         velocidadKnockback = Vector3.zero;
         velocidadVertical = 0f;
+    }
+
+private void VerificarBloqueoGlobal()
+    {
+        // Buscamos el gestor de la partida en la escena
+        GestorPartidaOnline gestor = FindAnyObjectByType<GestorPartidaOnline>();
+        
+        // Si el gestor aún no carga, prevenimos errores
+        if (gestor == null) return; 
+
+        // Si el estado NO es Jugando (es decir, está Esperando o en CuentaRegresiva)
+        if (gestor.Estado.Value != EstadoPartida.Jugando)
+        {
+            if (!movimientoBloqueadoHost) 
+                BloquearMovimientoInicioPartida();
+        }
+        else // Si el estado ya es Jugando, los liberamos
+        {
+            if (movimientoBloqueadoHost) 
+                DesbloquearMovimientoInicioPartida();
+        }
+    }
+
+    public void BloquearMovimientoInicioPartida()
+    {
+        if (!IsOwner) return;
+
+        movimientoBloqueadoHost = true;
+        velocidadPlanoActual = Vector3.zero;
+        velocidadKnockback = Vector3.zero;
+    }
+
+    public void DesbloquearMovimientoInicioPartida()
+    {
+        if (!IsOwner) return;
+        
+        movimientoBloqueadoHost = false;
+    }
+
+// NUEVO: Método público para que otros scripts sepan si el jugador puede actuar
+    public bool EstaBloqueado()
+    {
+        return movimientoBloqueado || movimientoBloqueadoHost;
     }
 }

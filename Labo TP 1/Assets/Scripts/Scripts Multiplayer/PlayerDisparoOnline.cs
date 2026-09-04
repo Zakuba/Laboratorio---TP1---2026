@@ -10,13 +10,23 @@ public class PlayerShotOnline : NetworkBehaviour
     private float tiempoUltimoDisparo = 0f;
 
     private ControladorBarraRecarga controladorBarraRecarga;
+    private PlayerMovimientoOnline movimientoJugador; // <-- NUEVA VARIABLE
 
-    public override void OnNetworkSpawn()
+public override void OnNetworkSpawn()
     {
         if (!IsOwner) return;
 
-        controladorBarraRecarga =
-            FindFirstObjectByType<ControladorBarraRecarga>();
+        controladorBarraRecarga = FindAnyObjectByType<ControladorBarraRecarga>();
+            
+        // CAMBIO: Usamos GetComponentInParent para que lo encuentre aunque el 
+        // script de disparo esté puesto en un objeto hijo (como la cámara o el arma).
+        movimientoJugador = GetComponentInParent<PlayerMovimientoOnline>();
+
+        // Agregamos esta alerta para saber si sigue sin encontrarlo
+        if (movimientoJugador == null)
+        {
+            Debug.LogError("ERROR: PlayerShotOnline no encontró PlayerMovimientoOnline en este jugador.");
+        }
     }
 
     void Update()
@@ -24,34 +34,38 @@ public class PlayerShotOnline : NetworkBehaviour
         if (!IsOwner) return;
         if (Time.timeScale == 0f) return;
 
+        // Si el jugador está bloqueado, no procesa el clic del mouse
+        if (movimientoJugador != null)
+        {
+            if (movimientoJugador.EstaBloqueado())
+            {
+                // Si quieres confirmar que funciona, descomenta la siguiente línea:
+                // Debug.Log("No puedes disparar, estás bloqueado.");
+                return; 
+            }
+        }
+
         if (Input.GetMouseButtonDown(0))
         {
             if (Time.time >= tiempoUltimoDisparo + tiempoEntreDisparos)
             {
-                // Si somos un cliente puro, mostramos la bola visual al instante
                 if (!IsServer)
                 {
                     LanzarBolaVisualLocal(transform.forward);
                 }
 
-                // Generamos la bola real en el servidor
                 LanzarBolaDeNieveServerRpc(transform.forward);
 
                 tiempoUltimoDisparo = Time.time;
 
-                // Iniciamos la barra de recarga
                 if (controladorBarraRecarga == null)
                 {
-                    controladorBarraRecarga = FindFirstObjectByType<ControladorBarraRecarga>();
+                    controladorBarraRecarga = FindAnyObjectByType<ControladorBarraRecarga>();
                 }
 
                 if (controladorBarraRecarga != null)
                 {
                     controladorBarraRecarga.IniciarRecarga(tiempoEntreDisparos);
-                }
-                else
-                {
-                    Debug.LogError("NO SE ENCONTRÓ ControladorBarraRecarga EN LA ESCENA");
                 }
             }
             else

@@ -7,10 +7,11 @@ public class ControladorMenu : MonoBehaviour
     [Header("Paneles de Interfaz")]
     public GameObject panelMenuPrincipal; 
     public GameObject panelMuestaMuestraDeControles;
+    public GameObject panelEsperaCliente; // <-- NUEVA VARIABLE: Asigna tu panel aquí en el Inspector
     
     [Header("HUD del Juego")]
     [Tooltip("Asigna aquí la Mira del Canvas para que aparezca al jugar")]
-    public GameObject miraHUD; // <-- NUEVA VARIABLE PARA LA MIRA
+    public GameObject miraHUD;
 
     public void JugarSinglePlayer()
     {
@@ -21,16 +22,29 @@ public class ControladorMenu : MonoBehaviour
     {
         Debug.Log("Iniciando como Host...");
         NetworkManager networkManager = NetworkManager.Singleton;
+        
+        // Suscripción para mostrar la mira del Host
         networkManager.OnClientConnectedCallback -= AlConectarHostLocal;
         networkManager.OnClientConnectedCallback += AlConectarHostLocal;
+
+        // Suscripción para detectar cuando entra el Cliente 2
+        networkManager.OnClientConnectedCallback -= AlConectarNuevoCliente;
+        networkManager.OnClientConnectedCallback += AlConectarNuevoCliente;
 
         if (!networkManager.StartHost())
         {
             networkManager.OnClientConnectedCallback -= AlConectarHostLocal;
+            networkManager.OnClientConnectedCallback -= AlConectarNuevoCliente;
             return;
         }
 
         OcultarMenuPrincipal();
+        
+        // Activamos el panel de espera al iniciar el Host
+        if (panelEsperaCliente != null)
+        {
+            panelEsperaCliente.SetActive(true);
+        }
     }
 
     public void UnirseHost()
@@ -60,6 +74,26 @@ public class ControladorMenu : MonoBehaviour
         networkManager.OnClientConnectedCallback -= AlConectarHostLocal;
     }
 
+    // <-- NUEVO MÉTODO: Se ejecuta cada vez que alguien se conecta
+    private void AlConectarNuevoCliente(ulong clientId)
+    {
+        NetworkManager networkManager = NetworkManager.Singleton;
+        
+        // Verificamos que el que se conectó NO sea el Host local
+        if (networkManager != null && clientId != networkManager.LocalClientId)
+        {
+            Debug.Log("¡El cliente se ha conectado! Ocultando panel de espera.");
+            
+            if (panelEsperaCliente != null)
+            {
+                panelEsperaCliente.SetActive(false);
+            }
+            
+            // Nos desuscribimos para que no se siga ejecutando si entran más personas
+            networkManager.OnClientConnectedCallback -= AlConectarNuevoCliente;
+        }
+    }
+
     private void AlCompletarSincronizacion(ulong clientId)
     {
         NetworkManager networkManager = NetworkManager.Singleton;
@@ -69,7 +103,6 @@ public class ControladorMenu : MonoBehaviour
         }
 
         MostrarMira();
-
         networkManager.SceneManager.OnSynchronizeComplete -= AlCompletarSincronizacion;
     }
 
@@ -99,6 +132,7 @@ public class ControladorMenu : MonoBehaviour
         if (NetworkManager.Singleton != null)
         {
             NetworkManager.Singleton.OnClientConnectedCallback -= AlConectarHostLocal;
+            NetworkManager.Singleton.OnClientConnectedCallback -= AlConectarNuevoCliente; // <-- Limpieza
 
             if (NetworkManager.Singleton.SceneManager != null)
             {

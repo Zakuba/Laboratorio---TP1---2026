@@ -1,9 +1,11 @@
 using Unity.Netcode;
 using UnityEngine;
+using System.Collections; // Necesario para la corrutina
 
 public enum EstadoPartida
 {
     Esperando,
+    CuentaRegresiva, // <-- NUEVO ESTADO
     Jugando,
     Finalizada
 }
@@ -31,6 +33,14 @@ public class GestorPartidaOnline : NetworkBehaviour
             NetworkVariableWritePermission.Server
         );
 
+    // <-- NUEVA VARIABLE: Sincroniza los números de la cuenta regresiva
+    public NetworkVariable<int> CuentaRegresiva = 
+        new(
+            5, 
+            NetworkVariableReadPermission.Everyone, 
+            NetworkVariableWritePermission.Server
+        );
+
     public NetworkVariable<ResultadoPartida> Resultado =
         new(
             ResultadoPartida.Ninguno,
@@ -52,26 +62,27 @@ public class GestorPartidaOnline : NetworkBehaviour
             NetworkVariableWritePermission.Server
         );
 
-public override void OnNetworkSpawn()
-{
-    if (!IsServer)
-        return;
-
-    TiempoLimiteActivo.Value = usarTiempoLimite;
-    Estado.Value = EstadoPartida.Esperando;
-    Resultado.Value = ResultadoPartida.Ninguno;
-
-    NetworkManager.OnClientConnectedCallback += AlConectarCliente;
-
-    IntentarIniciarPartida();
-}
-public override void OnNetworkDespawn()
-{
-    if (NetworkManager != null && IsServer)
+    public override void OnNetworkSpawn()
     {
-        NetworkManager.OnClientConnectedCallback -= AlConectarCliente;
+        if (!IsServer)
+            return;
+
+        TiempoLimiteActivo.Value = usarTiempoLimite;
+        Estado.Value = EstadoPartida.Esperando;
+        Resultado.Value = ResultadoPartida.Ninguno;
+
+        NetworkManager.OnClientConnectedCallback += AlConectarCliente;
+
+        IntentarIniciarPartida();
     }
-}
+
+    public override void OnNetworkDespawn()
+    {
+        if (NetworkManager != null && IsServer)
+        {
+            NetworkManager.OnClientConnectedCallback -= AlConectarCliente;
+        }
+    }
 
     private void Update()
     {
@@ -90,23 +101,66 @@ public override void OnNetworkDespawn()
         }
     }
 
-private void IniciarPartida()
-{
-    if (!IsServer)
-        return;
-
-    if (Estado.Value != EstadoPartida.Esperando)
-        return;
-
-    Estado.Value = EstadoPartida.Jugando;
-    Resultado.Value = ResultadoPartida.Ninguno;
-
-    if (TiempoLimiteActivo.Value)
+    private void AlConectarCliente(ulong clientId)
     {
-        TiempoFinServidor.Value =
-            NetworkManager.ServerTime.Time + duracionPartida;
+        IntentarIniciarPartida();
     }
-}
+
+    private void IntentarIniciarPartida()
+    {
+        if (!IsServer)
+            return;
+
+        if (Estado.Value != EstadoPartida.Esperando)
+            return;
+
+        if (NetworkManager.ConnectedClients.Count < 2)
+            return;
+
+        // NUEVO: En lugar de empezar a jugar de golpe, lanzamos la cuenta regresiva
+        StartCoroutine(SecuenciaDeInicio());
+    }
+
+    // NUEVO: Corrutina que maneja el conteo antes de jugar
+    private IEnumerator SecuenciaDeInicio()
+    {
+        Estado.Value = EstadoPartida.CuentaRegresiva;
+        CuentaRegresiva.Value = 5;
+
+        // Damos un segundo de margen para que el cliente termine de cargar la escena visualmente
+        yield return new WaitForSeconds(1f);
+
+        while (CuentaRegresiva.Value > 1)
+        {
+            yield return new WaitForSeconds(1f);
+            CuentaRegresiva.Value--;
+        }
+
+        yield return new WaitForSeconds(1f);
+        CuentaRegresiva.Value = 0; // Termina la cuenta
+
+        IniciarPartida();
+    }
+
+    private void IniciarPartida()
+    {
+        if (!IsServer)
+            return;
+
+        // Ahora venimos del estado de CuentaRegresiva
+        if (Estado.Value != EstadoPartida.CuentaRegresiva)
+            return;
+
+        Estado.Value = EstadoPartida.Jugando;
+        Resultado.Value = ResultadoPartida.Ninguno;
+
+        if (TiempoLimiteActivo.Value)
+        {
+            // El cronómetro empieza a correr EXACTAMENTE cuando termina la cuenta regresiva
+            TiempoFinServidor.Value =
+                NetworkManager.ServerTime.Time + duracionPartida;
+        }
+    }
 
     private void FinalizarPorTiempo()
     {
@@ -131,36 +185,17 @@ private void IniciarPartida()
         return Mathf.Max(0, Mathf.CeilToInt((float)restante));
     }
 
- public bool IntentarDeclararVictoria()
-{
-    if (!IsServer)
-        return false;
+    public bool IntentarDeclararVictoria()
+    {
+        if (!IsServer)
+            return false;
 
-    if (Estado.Value != EstadoPartida.Jugando)
-        return false;
+        if (Estado.Value != EstadoPartida.Jugando)
+            return false;
 
-    Estado.Value = EstadoPartida.Finalizada;
-    Resultado.Value = ResultadoPartida.Victoria;
+        Estado.Value = EstadoPartida.Finalizada;
+        Resultado.Value = ResultadoPartida.Victoria;
 
-    return true;
-}
-
-    private void AlConectarCliente(ulong clientId)
-{
-    IntentarIniciarPartida();
-}
-
-private void IntentarIniciarPartida()
-{
-    if (!IsServer)
-        return;
-
-    if (Estado.Value != EstadoPartida.Esperando)
-        return;
-
-    if (NetworkManager.ConnectedClients.Count < 2)
-        return;
-
-    IniciarPartida();
-}
+        return true;
+    }
 }
