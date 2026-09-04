@@ -1,14 +1,19 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Unity.Netcode;
+using TMPro; // <-- NUEVO: Necesario para usar el campo de texto
 
 public class ControladorMenu : MonoBehaviour
 {
     [Header("Paneles de Interfaz")]
     public GameObject panelMenuPrincipal; 
     public GameObject panelMuestaMuestraDeControles;
-    public GameObject panelEsperaCliente; // <-- NUEVA VARIABLE: Asigna tu panel aquí en el Inspector
+    public GameObject panelEsperaCliente;
     
+    [Header("Conexión Multijugador")]
+    [Tooltip("Asigna aquí el Input Field de TextMeshPro donde el jugador escribe la IP")]
+    public TMP_InputField campoIP; // <-- NUEVA VARIABLE: Para leer la IP que escriba tu amigo
+
     [Header("HUD del Juego")]
     [Tooltip("Asigna aquí la Mira del Canvas para que aparezca al jugar")]
     public GameObject miraHUD;
@@ -52,6 +57,17 @@ public class ControladorMenu : MonoBehaviour
         Debug.Log("Uniéndose a partida...");
         NetworkManager networkManager = NetworkManager.Singleton;
 
+        // <-- NUEVO: Leemos lo que el usuario escribió en la interfaz
+        string ipIngresada = "127.0.0.1"; // Por defecto, busca en la misma computadora
+        
+        if (campoIP != null && !string.IsNullOrWhiteSpace(campoIP.text))
+        {
+            ipIngresada = campoIP.text; // Si escribió algo, usamos esa IP (la de Hamachi)
+        }
+
+        // Asignamos la IP al transportador de Unity
+        NetworkManager.Singleton.GetComponent<Unity.Netcode.Transports.UTP.UnityTransport>().SetConnectionData(ipIngresada, 7777);
+
         if (!networkManager.StartClient())
         {
             return;
@@ -74,12 +90,10 @@ public class ControladorMenu : MonoBehaviour
         networkManager.OnClientConnectedCallback -= AlConectarHostLocal;
     }
 
-    // <-- NUEVO MÉTODO: Se ejecuta cada vez que alguien se conecta
     private void AlConectarNuevoCliente(ulong clientId)
     {
         NetworkManager networkManager = NetworkManager.Singleton;
         
-        // Verificamos que el que se conectó NO sea el Host local
         if (networkManager != null && clientId != networkManager.LocalClientId)
         {
             Debug.Log("¡El cliente se ha conectado! Ocultando panel de espera.");
@@ -89,7 +103,6 @@ public class ControladorMenu : MonoBehaviour
                 panelEsperaCliente.SetActive(false);
             }
             
-            // Nos desuscribimos para que no se siga ejecutando si entran más personas
             networkManager.OnClientConnectedCallback -= AlConectarNuevoCliente;
         }
     }
@@ -132,7 +145,7 @@ public class ControladorMenu : MonoBehaviour
         if (NetworkManager.Singleton != null)
         {
             NetworkManager.Singleton.OnClientConnectedCallback -= AlConectarHostLocal;
-            NetworkManager.Singleton.OnClientConnectedCallback -= AlConectarNuevoCliente; // <-- Limpieza
+            NetworkManager.Singleton.OnClientConnectedCallback -= AlConectarNuevoCliente; 
 
             if (NetworkManager.Singleton.SceneManager != null)
             {
