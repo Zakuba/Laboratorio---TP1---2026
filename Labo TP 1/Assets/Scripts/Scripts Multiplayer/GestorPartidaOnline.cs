@@ -1,11 +1,11 @@
 using Unity.Netcode;
 using UnityEngine;
-using System.Collections; // Necesario para la corrutina
+using System.Collections;
 
 public enum EstadoPartida
 {
     Esperando,
-    CuentaRegresiva, // <-- NUEVO ESTADO
+    CuentaRegresiva,
     Jugando,
     Finalizada
 }
@@ -33,11 +33,10 @@ public class GestorPartidaOnline : NetworkBehaviour
             NetworkVariableWritePermission.Server
         );
 
-    // <-- NUEVA VARIABLE: Sincroniza los números de la cuenta regresiva
-    public NetworkVariable<int> CuentaRegresiva = 
+    public NetworkVariable<int> CuentaRegresiva =
         new(
-            5, 
-            NetworkVariableReadPermission.Everyone, 
+            5,
+            NetworkVariableReadPermission.Everyone,
             NetworkVariableWritePermission.Server
         );
 
@@ -48,10 +47,6 @@ public class GestorPartidaOnline : NetworkBehaviour
             NetworkVariableWritePermission.Server
         );
 
-    // NUEVO: Guarda el ClientId del jugador que ganó, sincronizado a todos.
-    // ulong.MaxValue funciona como "todavía nadie ganó".
-    // Tanto Victoria.cs como Derrota.cs leen esta misma variable para saber
-    // si les toca la experiencia de ganador o de perdedor.
     public NetworkVariable<ulong> ClienteGanador =
         new(
             ulong.MaxValue,
@@ -73,8 +68,19 @@ public class GestorPartidaOnline : NetworkBehaviour
             NetworkVariableWritePermission.Server
         );
 
+
+    // =====================================================
+    // INICIO
+    // =====================================================
+
     public override void OnNetworkSpawn()
     {
+        // Todos los clientes escuchan si se desconecta
+        // el servidor/Host.
+        NetworkManager.OnClientDisconnectCallback +=
+            AlDesconectarCliente;
+
+        // A partir de acá solamente trabaja el servidor.
         if (!IsServer)
             return;
 
@@ -82,18 +88,71 @@ public class GestorPartidaOnline : NetworkBehaviour
         Estado.Value = EstadoPartida.Esperando;
         Resultado.Value = ResultadoPartida.Ninguno;
 
-        NetworkManager.OnClientConnectedCallback += AlConectarCliente;
+        NetworkManager.OnClientConnectedCallback +=
+            AlConectarCliente;
 
         IntentarIniciarPartida();
     }
 
+
     public override void OnNetworkDespawn()
     {
-        if (NetworkManager != null && IsServer)
+        if (NetworkManager != null)
         {
-            NetworkManager.OnClientConnectedCallback -= AlConectarCliente;
+            NetworkManager.OnClientDisconnectCallback -=
+                AlDesconectarCliente;
+
+            if (IsServer)
+            {
+                NetworkManager.OnClientConnectedCallback -=
+                    AlConectarCliente;
+            }
         }
     }
+
+
+    // =====================================================
+    // DESCONEXIÓN DEL HOST
+    // =====================================================
+
+    private void AlDesconectarCliente(ulong clientId)
+    {
+        // Si somos el servidor/Host, no hacemos nada.
+        // Esta lógica solamente interesa al cliente.
+        if (IsServer)
+            return;
+
+        Debug.Log(
+            "El Host se desconectó. Volviendo al menú..."
+        );
+
+        // Buscamos el controlador del menú que ya existe
+        // dentro de Nivel1.
+        ControladorMenu menu =
+            FindAnyObjectByType<ControladorMenu>();
+
+        if (menu != null)
+        {
+            menu.VolverAlMenuPorDesconexion();
+        }
+        else
+        {
+            Debug.LogWarning(
+                "No se encontró ControladorMenu en Nivel1."
+            );
+        }
+
+        // Cerramos la conexión local del cliente.
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.Shutdown();
+        }
+    }
+
+
+    // =====================================================
+    // ACTUALIZACIÓN DE PARTIDA
+    // =====================================================
 
     private void Update()
     {
@@ -106,16 +165,23 @@ public class GestorPartidaOnline : NetworkBehaviour
         if (!TiempoLimiteActivo.Value)
             return;
 
-        if (NetworkManager.ServerTime.Time >= TiempoFinServidor.Value)
+        if (NetworkManager.ServerTime.Time >=
+            TiempoFinServidor.Value)
         {
             FinalizarPorTiempo();
         }
     }
 
+
+    // =====================================================
+    // CONEXIÓN DE CLIENTES
+    // =====================================================
+
     private void AlConectarCliente(ulong clientId)
     {
         IntentarIniciarPartida();
     }
+
 
     private void IntentarIniciarPartida()
     {
@@ -128,37 +194,46 @@ public class GestorPartidaOnline : NetworkBehaviour
         if (NetworkManager.ConnectedClients.Count < 2)
             return;
 
-        // NUEVO: En lugar de empezar a jugar de golpe, lanzamos la cuenta regresiva
         StartCoroutine(SecuenciaDeInicio());
     }
 
-    // NUEVO: Corrutina que maneja el conteo antes de jugar
+
+    // =====================================================
+    // CUENTA REGRESIVA
+    // =====================================================
+
     private IEnumerator SecuenciaDeInicio()
     {
         Estado.Value = EstadoPartida.CuentaRegresiva;
         CuentaRegresiva.Value = 5;
 
-        // Damos un segundo de margen para que el cliente termine de cargar la escena visualmente
+        // Damos tiempo al cliente para cargar visualmente.
         yield return new WaitForSeconds(1f);
 
         while (CuentaRegresiva.Value > 1)
         {
             yield return new WaitForSeconds(1f);
+
             CuentaRegresiva.Value--;
         }
 
         yield return new WaitForSeconds(1f);
-        CuentaRegresiva.Value = 0; // Termina la cuenta
+
+        CuentaRegresiva.Value = 0;
 
         IniciarPartida();
     }
+
+
+    // =====================================================
+    // INICIO DE PARTIDA
+    // =====================================================
 
     private void IniciarPartida()
     {
         if (!IsServer)
             return;
 
-        // Ahora venimos del estado de CuentaRegresiva
         if (Estado.Value != EstadoPartida.CuentaRegresiva)
             return;
 
@@ -167,11 +242,16 @@ public class GestorPartidaOnline : NetworkBehaviour
 
         if (TiempoLimiteActivo.Value)
         {
-            // El cronómetro empieza a correr EXACTAMENTE cuando termina la cuenta regresiva
             TiempoFinServidor.Value =
-                NetworkManager.ServerTime.Time + duracionPartida;
+                NetworkManager.ServerTime.Time +
+                duracionPartida;
         }
     }
+
+
+    // =====================================================
+    // FINALIZACIÓN POR TIEMPO
+    // =====================================================
 
     private void FinalizarPorTiempo()
     {
@@ -182,6 +262,11 @@ public class GestorPartidaOnline : NetworkBehaviour
         Resultado.Value = ResultadoPartida.TiempoAgotado;
     }
 
+
+    // =====================================================
+    // TIEMPO RESTANTE
+    // =====================================================
+
     public int ObtenerSegundosRestantes()
     {
         if (!IsSpawned)
@@ -191,12 +276,22 @@ public class GestorPartidaOnline : NetworkBehaviour
             return 0;
 
         double restante =
-            TiempoFinServidor.Value - NetworkManager.ServerTime.Time;
+            TiempoFinServidor.Value -
+            NetworkManager.ServerTime.Time;
 
-        return Mathf.Max(0, Mathf.CeilToInt((float)restante));
+        return Mathf.Max(
+            0,
+            Mathf.CeilToInt((float)restante)
+        );
     }
 
-    public bool IntentarDeclararVictoria(ulong clienteGanadorId)
+
+    // =====================================================
+    // DECLARAR VICTORIA
+    // =====================================================
+
+    public bool IntentarDeclararVictoria(
+        ulong clienteGanadorId)
     {
         if (!IsServer)
             return false;
@@ -206,7 +301,8 @@ public class GestorPartidaOnline : NetworkBehaviour
 
         Estado.Value = EstadoPartida.Finalizada;
         Resultado.Value = ResultadoPartida.Victoria;
-        ClienteGanador.Value = clienteGanadorId; // <-- NUEVO
+
+        ClienteGanador.Value = clienteGanadorId;
 
         return true;
     }

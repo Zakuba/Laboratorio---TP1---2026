@@ -1,22 +1,35 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Unity.Netcode;
-using TMPro; // <-- NUEVO: Necesario para usar el campo de texto
+using TMPro;
 
 public class ControladorMenu : MonoBehaviour
 {
     [Header("Paneles de Interfaz")]
-    public GameObject panelMenuPrincipal; 
+    public GameObject panelMenuPrincipal;
     public GameObject panelMuestaMuestraDeControles;
     public GameObject panelEsperaCliente;
-    
+
     [Header("Conexión Multijugador")]
     [Tooltip("Asigna aquí el Input Field de TextMeshPro donde el jugador escribe la IP")]
-    public TMP_InputField campoIP; // <-- NUEVA VARIABLE: Para leer la IP que escriba tu amigo
+    public TMP_InputField campoIP;
 
     [Header("HUD del Juego")]
-    [Tooltip("Asigna aquí la Mira del Canvas para que aparezca al jugar")]
+    [Tooltip("Mira del jugador")]
     public GameObject miraHUD;
+
+    [Tooltip("Timer de la partida")]
+    public GameObject timerHUD;
+
+    [Header("Pausa")]
+    [Tooltip("Panel de pausa del juego")]
+    public GameObject panelPausa;
+
+    [Header("Cámara del Menú")]
+    [Tooltip("Cámara que muestra el escenario detrás del menú")]
+    public Camera camaraMenu;
+
+    private bool volviendoAlMenu = false;
 
     public void JugarSinglePlayer()
     {
@@ -26,13 +39,12 @@ public class ControladorMenu : MonoBehaviour
     public void IniciarHost()
     {
         Debug.Log("Iniciando como Host...");
+
         NetworkManager networkManager = NetworkManager.Singleton;
-        
-        // Suscripción para mostrar la mira del Host
+
         networkManager.OnClientConnectedCallback -= AlConectarHostLocal;
         networkManager.OnClientConnectedCallback += AlConectarHostLocal;
 
-        // Suscripción para detectar cuando entra el Cliente 2
         networkManager.OnClientConnectedCallback -= AlConectarNuevoCliente;
         networkManager.OnClientConnectedCallback += AlConectarNuevoCliente;
 
@@ -44,8 +56,7 @@ public class ControladorMenu : MonoBehaviour
         }
 
         OcultarMenuPrincipal();
-        
-        // Activamos el panel de espera al iniciar el Host
+
         if (panelEsperaCliente != null)
         {
             panelEsperaCliente.SetActive(true);
@@ -55,68 +66,84 @@ public class ControladorMenu : MonoBehaviour
     public void UnirseHost()
     {
         Debug.Log("Uniéndose a partida...");
+
         NetworkManager networkManager = NetworkManager.Singleton;
 
-        // <-- NUEVO: Leemos lo que el usuario escribió en la interfaz
-        string ipIngresada = "127.0.0.1"; // Por defecto, busca en la misma computadora
-        
+        string ipIngresada = "127.0.0.1";
+
         if (campoIP != null && !string.IsNullOrWhiteSpace(campoIP.text))
         {
-            ipIngresada = campoIP.text; // Si escribió algo, usamos esa IP (la de Hamachi)
+            ipIngresada = campoIP.text;
         }
 
-        // Asignamos la IP al transportador de Unity
-        NetworkManager.Singleton.GetComponent<Unity.Netcode.Transports.UTP.UnityTransport>().SetConnectionData(ipIngresada, 7777);
+        NetworkManager.Singleton
+            .GetComponent<Unity.Netcode.Transports.UTP.UnityTransport>()
+            .SetConnectionData(ipIngresada, 7777);
 
         if (!networkManager.StartClient())
         {
             return;
         }
 
-        networkManager.SceneManager.OnSynchronizeComplete -= AlCompletarSincronizacion;
-        networkManager.SceneManager.OnSynchronizeComplete += AlCompletarSincronizacion;
-        OcultarMenuPrincipal();                 
+        networkManager.SceneManager.OnSynchronizeComplete -=
+            AlCompletarSincronizacion;
+
+        networkManager.SceneManager.OnSynchronizeComplete +=
+            AlCompletarSincronizacion;
+
+        OcultarMenuPrincipal();
     }
 
     private void AlConectarHostLocal(ulong clientId)
     {
         NetworkManager networkManager = NetworkManager.Singleton;
-        if (networkManager == null || clientId != networkManager.LocalClientId)
+
+        if (networkManager == null ||
+            clientId != networkManager.LocalClientId)
         {
             return;
         }
 
-        networkManager.OnClientConnectedCallback -= AlConectarHostLocal;
+        networkManager.OnClientConnectedCallback -=
+            AlConectarHostLocal;
     }
 
     private void AlConectarNuevoCliente(ulong clientId)
     {
         NetworkManager networkManager = NetworkManager.Singleton;
-        
-        if (networkManager != null && clientId != networkManager.LocalClientId)
+
+        if (networkManager != null &&
+            clientId != networkManager.LocalClientId)
         {
-            Debug.Log("¡El cliente se ha conectado! Ocultando panel de espera.");
-            
+            Debug.Log(
+                "¡El cliente se ha conectado! Ocultando panel de espera."
+            );
+
             if (panelEsperaCliente != null)
             {
                 panelEsperaCliente.SetActive(false);
                 MostrarMira();
             }
-            
-            networkManager.OnClientConnectedCallback -= AlConectarNuevoCliente;
+
+            networkManager.OnClientConnectedCallback -=
+                AlConectarNuevoCliente;
         }
     }
 
     private void AlCompletarSincronizacion(ulong clientId)
     {
         NetworkManager networkManager = NetworkManager.Singleton;
-        if (networkManager == null || clientId != networkManager.LocalClientId)
+
+        if (networkManager == null ||
+            clientId != networkManager.LocalClientId)
         {
             return;
         }
 
         MostrarMira();
-        networkManager.SceneManager.OnSynchronizeComplete -= AlCompletarSincronizacion;
+
+        networkManager.SceneManager.OnSynchronizeComplete -=
+            AlCompletarSincronizacion;
     }
 
     private void MostrarMira()
@@ -126,11 +153,15 @@ public class ControladorMenu : MonoBehaviour
             return;
         }
 
-        NetworkObject jugadorLocal = NetworkManager.Singleton?.LocalClient?.PlayerObject;
+        NetworkObject jugadorLocal =
+            NetworkManager.Singleton?.LocalClient?.PlayerObject;
+
         Camera camaraLocal = jugadorLocal != null
             ? jugadorLocal.GetComponentInChildren<Camera>(true)
             : null;
-        Canvas canvasHUD = miraHUD.GetComponentInParent<Canvas>();
+
+        Canvas canvasHUD =
+            miraHUD.GetComponentInParent<Canvas>();
 
         if (canvasHUD != null && camaraLocal != null)
         {
@@ -140,16 +171,117 @@ public class ControladorMenu : MonoBehaviour
         miraHUD.SetActive(true);
     }
 
+    // ============================================================
+    // VOLVER AL MENÚ CUANDO EL HOST SE DESCONECTA
+    // ============================================================
+
+    public void VolverAlMenuPorDesconexion()
+    {
+        if (volviendoAlMenu)
+        {
+            return;
+        }
+
+        volviendoAlMenu = true;
+
+        Debug.Log(
+            "El Host se desconectó. Restaurando menú principal..."
+        );
+
+        // --------------------------------------------------------
+        // APAGAR HUD
+        // --------------------------------------------------------
+
+        if (miraHUD != null)
+        {
+            miraHUD.SetActive(false);
+        }
+
+        GameObject panelTiempo = GameObject.Find("PanelTiempo");
+
+        if (panelTiempo != null)
+        {
+            panelTiempo.SetActive(false);
+        }
+        else
+        {
+            Debug.LogWarning(
+                "No se encontró el objeto PanelTiempo."
+            );
+        }
+
+        // --------------------------------------------------------
+        // APAGAR PAUSA
+        // --------------------------------------------------------
+
+        if (panelPausa != null)
+        {
+            panelPausa.SetActive(false);
+        }
+
+        // --------------------------------------------------------
+        // APAGAR PANEL DE ESPERA
+        // --------------------------------------------------------
+
+        if (panelEsperaCliente != null)
+        {
+            panelEsperaCliente.SetActive(false);
+        }
+
+        // --------------------------------------------------------
+        // APAGAR PANEL DE CONTROLES
+        // --------------------------------------------------------
+
+        if (panelMuestaMuestraDeControles != null)
+        {
+            panelMuestaMuestraDeControles.SetActive(false);
+        }
+
+        // --------------------------------------------------------
+        // MOSTRAR MENÚ PRINCIPAL
+        // --------------------------------------------------------
+
+        if (panelMenuPrincipal != null)
+        {
+            panelMenuPrincipal.SetActive(true);
+        }
+
+        // --------------------------------------------------------
+        // ACTIVAR CÁMARA DEL MENÚ
+        // --------------------------------------------------------
+
+        if (camaraMenu != null)
+        {
+            camaraMenu.gameObject.SetActive(true);
+            camaraMenu.enabled = true;
+
+            Debug.Log("Cámara del menú activada.");
+        }
+
+        // --------------------------------------------------------
+        // LIBERAR CURSOR
+        // --------------------------------------------------------
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        Debug.Log("Menú restaurado correctamente.");
+    }
+
     private void OnDestroy()
     {
         if (NetworkManager.Singleton != null)
         {
-            NetworkManager.Singleton.OnClientConnectedCallback -= AlConectarHostLocal;
-            NetworkManager.Singleton.OnClientConnectedCallback -= AlConectarNuevoCliente; 
+            NetworkManager.Singleton.OnClientConnectedCallback -=
+                AlConectarHostLocal;
+
+            NetworkManager.Singleton.OnClientConnectedCallback -=
+                AlConectarNuevoCliente;
 
             if (NetworkManager.Singleton.SceneManager != null)
             {
-                NetworkManager.Singleton.SceneManager.OnSynchronizeComplete -= AlCompletarSincronizacion;
+                NetworkManager.Singleton.SceneManager
+                    .OnSynchronizeComplete -= AlCompletarSincronizacion;
             }
         }
     }
@@ -164,14 +296,16 @@ public class ControladorMenu : MonoBehaviour
 
     public void VerControles()
     {
-        panelMuestaMuestraDeControles.SetActive(true); 
+        panelMuestaMuestraDeControles.SetActive(true);
+
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
 
     public void VolveraMenu()
     {
-        panelMuestaMuestraDeControles.SetActive(false); 
+        panelMuestaMuestraDeControles.SetActive(false);
+
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
