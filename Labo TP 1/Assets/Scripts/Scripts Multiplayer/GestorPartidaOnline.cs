@@ -48,6 +48,17 @@ public class GestorPartidaOnline : NetworkBehaviour
             NetworkVariableWritePermission.Server
         );
 
+    // NUEVO: Guarda el ClientId del jugador que ganó, sincronizado a todos.
+    // ulong.MaxValue funciona como "todavía nadie ganó".
+    // Tanto Victoria.cs como Derrota.cs leen esta misma variable para saber
+    // si les toca la experiencia de ganador o de perdedor.
+    public NetworkVariable<ulong> ClienteGanador =
+        new(
+            ulong.MaxValue,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
     public NetworkVariable<bool> TiempoLimiteActivo =
         new(
             false,
@@ -185,7 +196,7 @@ public class GestorPartidaOnline : NetworkBehaviour
         return Mathf.Max(0, Mathf.CeilToInt((float)restante));
     }
 
-    public bool IntentarDeclararVictoria()
+    public bool IntentarDeclararVictoria(ulong clienteGanadorId)
     {
         if (!IsServer)
             return false;
@@ -195,6 +206,7 @@ public class GestorPartidaOnline : NetworkBehaviour
 
         Estado.Value = EstadoPartida.Finalizada;
         Resultado.Value = ResultadoPartida.Victoria;
+        ClienteGanador.Value = clienteGanadorId; // <-- NUEVO
 
         return true;
     }

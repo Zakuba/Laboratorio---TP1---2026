@@ -8,114 +8,116 @@ public class Victoria : NetworkBehaviour
     [SerializeField] private Camera camaraMenu;
     [SerializeField] private GestorPartidaOnline gestorPartida;
 
-private void OnTriggerEnter(Collider other)
-{
-    if (!other.CompareTag("Player"))
-        return;
-
-    PlayerMovimientoOnline jugador =
-        other.GetComponentInParent<PlayerMovimientoOnline>();
-
-    if (jugador == null || !jugador.IsOwner)
-        return;
-
-    SolicitarVictoriaServerRpc();
-}
-
-[Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-private void SolicitarVictoriaServerRpc(
-    RpcParams rpcParams = default)
-{
-    if (gestorPartida == null)
-        return;
-
-    bool victoriaAceptada =
-        gestorPartida.IntentarDeclararVictoria();
-
-    if (!victoriaAceptada)
+    private void OnTriggerEnter(Collider other)
     {
-        Debug.Log(
-            "VICTORIA RECHAZADA: la partida ya finalizó."
-        );
-        return;
+        if (!other.CompareTag("Player"))
+            return;
+
+        PlayerMovimientoOnline jugador =
+            other.GetComponentInParent<PlayerMovimientoOnline>();
+
+        if (jugador == null || !jugador.IsOwner)
+            return;
+
+        SolicitarVictoriaServerRpc();
     }
 
-    ulong clientIdGanador =
-        rpcParams.Receive.SenderClientId;
-
-    ClientRpcParams parametrosCliente =
-        new ClientRpcParams
-        {
-            Send = new ClientRpcSendParams
-            {
-                TargetClientIds =
-                    new[] { clientIdGanador }
-            }
-        };
-
-    EjecutarVictoriaClientRpc(parametrosCliente);
-}
-[ClientRpc]
-private void EjecutarVictoriaClientRpc(
-    ClientRpcParams clientRpcParams = default)
-{
-    PlayerMovimientoOnline jugador =
-        NetworkManager.Singleton.LocalClient.PlayerObject
-            .GetComponent<PlayerMovimientoOnline>();
-
-    if (jugador == null)
-        return;
-
-    Debug.Log("VICTORIA: jugador confirmado por servidor");
-
-    // Teletransportar
-    jugador.Teletransportar(puntoVictoria);
-
-    // Bloquear movimiento
-    jugador.BloquearMovimiento();
-
-    // Desactivar cámara del jugador
-    CameraFollowOnline camaraJugador =
-        jugador.GetComponentInChildren<CameraFollowOnline>();
-
-    if (camaraJugador != null)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void SolicitarVictoriaServerRpc(
+        RpcParams rpcParams = default)
     {
-        Debug.Log("VICTORIA: cámara del jugador encontrada");
+        if (gestorPartida == null)
+            return;
 
-        camaraJugador.enabled = false;
+        bool victoriaAceptada =
+            gestorPartida.IntentarDeclararVictoria(
+                rpcParams.Receive.SenderClientId
+            );
 
-        Camera camaraNormal =
-            camaraJugador.GetComponent<Camera>();
-
-        if (camaraNormal != null)
+        if (!victoriaAceptada)
         {
-            camaraNormal.enabled = false;
+            Debug.Log(
+                "VICTORIA RECHAZADA: la partida ya finalizó."
+            );
+            return;
+        }
+
+        ulong clientIdGanador =
+            rpcParams.Receive.SenderClientId;
+
+        ClientRpcParams parametrosCliente =
+            new ClientRpcParams
+            {
+                Send = new ClientRpcSendParams
+                {
+                    TargetClientIds =
+                        new[] { clientIdGanador }
+                }
+            };
+
+        EjecutarVictoriaClientRpc(parametrosCliente);
+    }
+    [ClientRpc]
+    private void EjecutarVictoriaClientRpc(
+        ClientRpcParams clientRpcParams = default)
+    {
+        PlayerMovimientoOnline jugador =
+            NetworkManager.Singleton.LocalClient.PlayerObject
+                .GetComponent<PlayerMovimientoOnline>();
+
+        if (jugador == null)
+            return;
+
+        Debug.Log("VICTORIA: jugador confirmado por servidor");
+
+        // Teletransportar
+        jugador.Teletransportar(puntoVictoria);
+
+        // Bloquear movimiento
+        jugador.BloquearMovimiento();
+
+        // Desactivar cámara del jugador
+        CameraFollowOnline camaraJugador =
+            jugador.GetComponentInChildren<CameraFollowOnline>();
+
+        if (camaraJugador != null)
+        {
+            Debug.Log("VICTORIA: cámara del jugador encontrada");
+
+            camaraJugador.enabled = false;
+
+            Camera camaraNormal =
+                camaraJugador.GetComponent<Camera>();
+
+            if (camaraNormal != null)
+            {
+                camaraNormal.enabled = false;
+
+                Debug.Log(
+                    "VICTORIA: cámara del jugador desactivada"
+                );
+            }
+        }
+
+        // Desactivar cámara del menú
+        if (camaraMenu != null)
+        {
+            camaraMenu.enabled = false;
 
             Debug.Log(
-                "VICTORIA: cámara del jugador desactivada"
+                "VICTORIA: cámara menú desactivada"
             );
         }
+
+        // Activar cámara de victoria
+        if (camVictoria != null)
+        {
+            Debug.Log(
+                "VICTORIA: ACTIVANDO CAMARA VICTORIA"
+            );
+
+            camVictoria.gameObject.SetActive(true);
+            camVictoria.enabled = true;
+        }
     }
-
-    // Desactivar cámara del menú
-    if (camaraMenu != null)
-    {
-        camaraMenu.enabled = false;
-
-        Debug.Log(
-            "VICTORIA: cámara menú desactivada"
-        );
-    }
-
-    // Activar cámara de victoria
-    if (camVictoria != null)
-    {
-        Debug.Log(
-            "VICTORIA: ACTIVANDO CAMARA VICTORIA"
-        );
-
-        camVictoria.gameObject.SetActive(true);
-        camVictoria.enabled = true;
-    }
-}
 }
