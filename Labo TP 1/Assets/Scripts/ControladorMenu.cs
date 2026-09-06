@@ -86,7 +86,6 @@ public class ControladorMenu : MonoBehaviour
             return;
         }
 
-        MostrarMira();
         networkManager.OnClientConnectedCallback -= AlConectarHostLocal;
     }
 
@@ -101,6 +100,7 @@ public class ControladorMenu : MonoBehaviour
             if (panelEsperaCliente != null)
             {
                 panelEsperaCliente.SetActive(false);
+                MostrarMira();
             }
             
             networkManager.OnClientConnectedCallback -= AlConectarNuevoCliente;
