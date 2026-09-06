@@ -22,6 +22,9 @@ public class GestorPartidaOnline : NetworkBehaviour
     [Header("Límite de tiempo")]
     [SerializeField] private bool usarTiempoLimite = true;
 
+    [Header("Referencias UI")]
+    [SerializeField] private GameObject panelPausa;
+
     [SerializeField]
     [Min(1f)]
     private float duracionPartida = 180f;
@@ -125,6 +128,11 @@ public class GestorPartidaOnline : NetworkBehaviour
         Debug.Log(
             "El Host se desconectó. Volviendo al menú..."
         );
+
+        if (panelPausa != null)
+        {
+        panelPausa.SetActive(false);
+        }
 
         // Buscamos el controlador del menú que ya existe
         // dentro de Nivel1.
