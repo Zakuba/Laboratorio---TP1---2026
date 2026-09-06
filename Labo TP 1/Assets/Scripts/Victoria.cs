@@ -249,4 +249,28 @@ public class Victoria : NetworkBehaviour
             }
         }
     }
+
+    // =====================================================
+    // RESTAURAR CÁMARAS
+    // =====================================================
+    public void RestaurarCamarasMenu()
+    {
+        if (camVictoria != null)
+        {
+            camVictoria.enabled = false;
+            camVictoria.gameObject.SetActive(false);
+        }
+
+        if (camDerrota != null)
+        {
+            camDerrota.enabled = false;
+            camDerrota.gameObject.SetActive(false);
+        }
+
+        if (camaraMenu != null)
+        {
+            camaraMenu.gameObject.SetActive(true);
+            camaraMenu.enabled = true;
+        }
+    }
 }

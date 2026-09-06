@@ -118,39 +118,35 @@ public class GestorPartidaOnline : NetworkBehaviour
     // DESCONEXIÓN DEL HOST
     // =====================================================
 
-    private void AlDesconectarCliente(ulong clientId)
+private void AlDesconectarCliente(ulong clientId)
     {
-        // Si somos el servidor/Host, no hacemos nada.
-        // Esta lógica solamente interesa al cliente.
         if (IsServer)
             return;
 
-        Debug.Log(
-            "El Host se desconectó. Volviendo al menú..."
-        );
+        Debug.Log("El Host se desconectó. Volviendo al menú...");
 
         if (panelPausa != null)
         {
-        panelPausa.SetActive(false);
+            panelPausa.SetActive(false);
         }
 
-        // Buscamos el controlador del menú que ya existe
-        // dentro de Nivel1.
-        ControladorMenu menu =
-            FindAnyObjectByType<ControladorMenu>();
+        // Restaura las cámaras llamando al script Victoria de la escena
+        Victoria scriptVictoria = FindAnyObjectByType<Victoria>();
+        if (scriptVictoria != null)
+        {
+            scriptVictoria.RestaurarCamarasMenu();
+        }
 
+        ControladorMenu menu = FindAnyObjectByType<ControladorMenu>();
         if (menu != null)
         {
             menu.VolverAlMenuPorDesconexion();
         }
         else
         {
-            Debug.LogWarning(
-                "No se encontró ControladorMenu en Nivel1."
-            );
+            Debug.LogWarning("No se encontró ControladorMenu en Nivel1.");
         }
 
-        // Cerramos la conexión local del cliente.
         if (NetworkManager.Singleton != null)
         {
             NetworkManager.Singleton.Shutdown();
@@ -314,4 +310,5 @@ public class GestorPartidaOnline : NetworkBehaviour
 
         return true;
     }
+
 }
