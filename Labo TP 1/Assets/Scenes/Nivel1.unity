@@ -9930,13 +9930,13 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 153167156}
-  m_LocalRotation: {x: -0.0822822, y: 0.9028967, z: 0.024841769, w: 0.42117706}
-  m_LocalPosition: {x: 0, y: 0, z: -17609.07}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1500755153}
-  m_Father: {fileID: 624558726}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -27295,7 +27295,6 @@ RectTransform:
   - {fileID: 1427480559}
   - {fileID: 849588105}
   - {fileID: 1695565094}
-  - {fileID: 153167159}
   - {fileID: 1839405670}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -28992,7 +28991,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 688754690}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -51780,6 +51779,7 @@ GameObject:
   - component: {fileID: 1354665471}
   - component: {fileID: 1354665473}
   - component: {fileID: 1354665472}
+  - component: {fileID: 1354665474}
   m_Layer: 5
   m_Name: Image
   m_TagString: Untagged
@@ -51844,6 +51844,28 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1354665470}
   m_CullTransparentMesh: 1
+--- !u!95 &1354665474
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1354665470}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 72233b16da379ff43b6f45873c130224, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!4 &1357831027 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3174923170551661957, guid: defb4cdc6208f004795f0160e8fb04ed, type: 3}
@@ -89072,6 +89094,7 @@ SceneRoots:
   - {fileID: 624558726}
   - {fileID: 120758883}
   - {fileID: 2023442986}
+  - {fileID: 153167159}
   - {fileID: 628417700}
   - {fileID: 1131757502}
   - {fileID: 1493214817}
