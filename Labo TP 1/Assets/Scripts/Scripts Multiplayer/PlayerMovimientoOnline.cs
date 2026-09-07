@@ -13,6 +13,8 @@ public class PlayerMovimientoOnline : NetworkBehaviour
     [Header("Movimiento Base")]
     [SerializeField] private float velocidadMaxima = 6f;
 
+    private bool movimientoBloqueado = false;
+
     [Header("Aceleración y Desaceleración")]
     [SerializeField] private float aceleracion = 25f; 
     [SerializeField] private float desaceleracion = 30f; 
@@ -41,6 +43,8 @@ public class PlayerMovimientoOnline : NetworkBehaviour
 
     private float velocidadVertical;
 
+    private bool movimientoBloqueadoHost = false;
+
 private void Awake()
     {
         controlador = GetComponent<CharacterController>();
@@ -68,6 +72,13 @@ private void Awake()
     {
         // 3. ¡MUY IMPORTANTE! Si no soy el dueño, no proceso movimiento ni físicas.
         if (!IsOwner) return;
+
+        VerificarBloqueoGlobal();
+
+        if (movimientoBloqueado)
+        {
+            return;
+        }
 
         // Si el jugador cayó y reapareció, terminamos este frame
         if (DetectarCaida())
@@ -115,27 +126,28 @@ private void Awake()
         SceneManager.sceneLoaded -= AlCargarEscena;
     }
 
-    public void AplicarKnockbackDesdeServidor(Vector3 impulso)
+// ==============================================================
+    // LÓGICA DE EMPUJE (KNOCKBACK) - PREDICCIÓN LOCAL (Cero Lag)
+    // ==============================================================
+
+    // Llamado por el Servidor
+    public void AplicarKnockbackServerAuthoritative(Vector3 impulso)
     {
         if (!IsServer) return;
 
-        ClientRpcParams parametros = new ClientRpcParams
+        // Si el Host es el que recibe el bolazo, se aplica el empuje a sí mismo.
+        // Si es un Cliente, el servidor no hace nada porque el Cliente se empujará solo.
+        if (IsOwner)
         {
-            Send = new ClientRpcSendParams
-            {
-                TargetClientIds = new[] { OwnerClientId }
-            }
-        };
-
-        AplicarKnockbackClientRpc(impulso, parametros);
+            velocidadKnockback += impulso;
+        }
     }
 
-    [ClientRpc]
-    private void AplicarKnockbackClientRpc(
-        Vector3 impulso,
-        ClientRpcParams clientRpcParams = default)
+    // Llamado localmente por el Cliente
+    public void AplicarKnockbackPredictedLocal(Vector3 impulso)
     {
-        if (!IsOwner) return;
+        // El cliente puro se empuja a sí mismo al instante
+        if (!IsClient || !IsOwner || IsServer) return;
 
         velocidadKnockback += impulso;
     }
@@ -215,6 +227,9 @@ private void Awake()
 
     private Vector3 CalcularMovimientoEnPlano()
     {
+        // Si está bloqueado, no procesa las teclas de WASD y no se mueve
+        if (movimientoBloqueadoHost) return Vector3.zero;
+
         float valorHorizontal = Input.GetAxisRaw("Horizontal");
         float valorVertical = Input.GetAxisRaw("Vertical");
 
@@ -258,7 +273,7 @@ private void Awake()
                 velocidadVertical = -2f;
             }
 
-            if (Input.GetButtonDown("Jump"))
+            if (!movimientoBloqueadoHost && Input.GetButtonDown("Jump"))
             {
                 velocidadVertical = Mathf.Sqrt(alturaSalto * -2f * gravedad);
             }
@@ -283,5 +298,75 @@ private void Awake()
     {
         ultimoPuntoReaparicion = nuevoPuntoReaparicion;
         Debug.Log("Checkpoint actualizado.");
+    }
+    public void Teletransportar(Transform destino)
+    {
+        if (!IsOwner)
+            return;
+
+        controlador.enabled = false;
+
+        transform.position = destino.position;
+
+        velocidadVertical = 0f;
+        velocidadPlanoActual = Vector3.zero;
+        velocidadKnockback = Vector3.zero;
+
+        controlador.enabled = true;
+    }
+
+    public void BloquearMovimiento()
+    {
+        if (!IsOwner)
+            return;
+
+        movimientoBloqueado = true;
+
+        velocidadPlanoActual = Vector3.zero;
+        velocidadKnockback = Vector3.zero;
+        velocidadVertical = 0f;
+    }
+
+private void VerificarBloqueoGlobal()
+    {
+        // Buscamos el gestor de la partida en la escena
+        GestorPartidaOnline gestor = FindAnyObjectByType<GestorPartidaOnline>();
+        
+        // Si el gestor aún no carga, prevenimos errores
+        if (gestor == null) return; 
+
+        // Si el estado NO es Jugando (es decir, está Esperando o en CuentaRegresiva)
+        if (gestor.Estado.Value != EstadoPartida.Jugando)
+        {
+            if (!movimientoBloqueadoHost) 
+                BloquearMovimientoInicioPartida();
+        }
+        else // Si el estado ya es Jugando, los liberamos
+        {
+            if (movimientoBloqueadoHost) 
+                DesbloquearMovimientoInicioPartida();
+        }
+    }
+
+    public void BloquearMovimientoInicioPartida()
+    {
+        if (!IsOwner) return;
+
+        movimientoBloqueadoHost = true;
+        velocidadPlanoActual = Vector3.zero;
+        velocidadKnockback = Vector3.zero;
+    }
+
+    public void DesbloquearMovimientoInicioPartida()
+    {
+        if (!IsOwner) return;
+        
+        movimientoBloqueadoHost = false;
+    }
+
+// NUEVO: Método público para que otros scripts sepan si el jugador puede actuar
+    public bool EstaBloqueado()
+    {
+        return movimientoBloqueado || movimientoBloqueadoHost;
     }
 }

@@ -8,9 +8,10 @@ public class CheckPoint : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            PlayerMovimiento jugador = other.GetComponent<PlayerMovimiento>();
+            PlayerMovimientoOnline jugador =
+                other.GetComponentInParent<PlayerMovimientoOnline>();
 
-            if (jugador != null)
+            if (jugador != null && jugador.IsOwner)
             {
                 jugador.ActualizarCheckpoint(puntoReaparicion);
             }
