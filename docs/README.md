@@ -22,6 +22,10 @@ docs/
     └── metricas.md
 ```
 
+## Versiones utilizadas
+- Unity: 6000.5.8f1
+- Netcode for GameObjects 2.13.2
+
 ## Cómo se usa esto durante el proyecto
 
 - Cada vez que se toma una decisión técnica relevante (motor, controlador de
