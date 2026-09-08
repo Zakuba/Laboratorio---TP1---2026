@@ -1,4 +1,4 @@
-# Documentación —— "¿Me quedo o me voy?"
+# Documentación ——— "¿Me quedo o me voy?"
 
 Esta carpeta centraliza la documentación técnica y de proceso del proyecto,
 en línea con lo pedido en el enunciado del TP (sección 7 — Proceso de trabajo):
